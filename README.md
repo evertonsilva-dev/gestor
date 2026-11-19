@@ -68,7 +68,7 @@ No primeiro deploy, crie na raiz `.env.worker.production.local` com `DATABASE_UR
 
 ### Preview do branch `develop`
 
-Cada push em `develop` publica automaticamente um Worker separado em `gestor-preview`, usando o Neon `dev`. A URL é `https://gestor-preview.evertonsilvadev.workers.dev`. Para habilitar o workflow `.github/workflows/deploy-worker-preview.yml`, configure no GitHub os secrets `CLOUDFLARE_API_TOKEN` (permissão Workers Editor), `CLOUDFLARE_ACCOUNT_ID`, `DEVELOP_DATABASE_URL` e `DEVELOP_NEON_AUTH_JWKS_URL`, além da variável `DEVELOP_NEON_AUTH_URL`. Os três valores Neon devem pertencer à branch `dev`. O deploy local pode ser feito com `npm run deploy:preview`, usando `.dev.vars` e `.env.local`.
+Cada push em `develop` publica um Preview isolado do Worker `gestor`; não cria outro Worker nem altera a produção. O Preview usa uma URL própria, normalmente `https://develop-gestor.evertonsilvadev.workers.dev`. Em **Workers & Pages → `gestor` → Settings → Variables and Secrets → Previews Base**, configure os secrets `DATABASE_URL` e `NEON_AUTH_JWKS_URL` com os valores da branch Neon `dev`. Previews não herdam os secrets de produção. No GitHub, configure `CLOUDFLARE_API_TOKEN` (permissão Workers Editor), `CLOUDFLARE_ACCOUNT_ID` e a variável `DEVELOP_NEON_AUTH_URL` para o build. O deploy local pode ser feito com `npm run deploy:preview`; ele também usa a configuração Previews Base do Cloudflare.
 
 ## Fluxo diário
 

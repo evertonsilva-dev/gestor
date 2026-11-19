@@ -24,30 +24,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Prepare development secrets
-        env:
-          DEVELOP_DATABASE_URL: ${{ secrets.DEVELOP_DATABASE_URL }}
-          DEVELOP_NEON_AUTH_JWKS_URL: ${{ secrets.DEVELOP_NEON_AUTH_JWKS_URL }}
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs')
-          const entries = [
-            ['DEVELOP_DATABASE_URL', 'DATABASE_URL', process.env.DEVELOP_DATABASE_URL],
-            ['DEVELOP_NEON_AUTH_JWKS_URL', 'NEON_AUTH_JWKS_URL', process.env.DEVELOP_NEON_AUTH_JWKS_URL],
-          ]
-
-          const secrets = {}
-          for (const [secretName, bindingName, value] of entries) {
-            if (!value) throw new Error(`Missing GitHub secret ${secretName}`)
-            secrets[bindingName] = value
-          }
-
-          fs.writeFileSync(
-            `${process.env.RUNNER_TEMP}/worker-preview-secrets.json`,
-            JSON.stringify(secrets),
-            { mode: 0o600 },
-          )
-          NODE
       - name: Build preview Worker
         env:
           VITE_NEON_AUTH_URL: ${{ vars.DEVELOP_NEON_AUTH_URL }}
@@ -62,7 +38,4 @@ jobs:
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::Missing CLOUDFLARE_API_TOKEN"; exit 1; fi
           if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "::error::Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; fi
-          npx cf deploy --prebuilt --mode preview --secrets-file "$RUNNER_TEMP/worker-preview-secrets.json"
-      - name: Remove temporary secrets
-        if: always()
-        run: rm -f "$RUNNER_TEMP/worker-preview-secrets.json"
+          npx cf previews deploy --prebuilt --preview-name develop
