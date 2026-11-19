@@ -1,0 +1,76 @@
+# Gestor | Monitoramento
+
+Plataforma multicliente para organizar a alimentação manual diária dos dados de comunicação e publicar relatórios isolados por organização.
+
+## Arquitetura
+
+- Monorepo npm com duas aplicações: `apps/frontend` (React, Vite, TypeScript, styled-components, react-select, react-chartjs-2/Chart.js e rc-picker) e `apps/api` (Cloudflare Pages Functions e migrations).
+- A API é same-origin e usa o runtime Workers; não há um servidor Node/Express persistente.
+- Neon Auth para login administrativo por e-mail e senha; clientes entram com chaves de acesso próprias da aplicação.
+- Neon Postgres acessado somente pelas funções com `@neondatabase/serverless`.
+- A autorização de administradores usa `app_users`; a chave do cliente é armazenada como hash e vinculada a uma organização.
+- Sessões de cliente usam cookie HttpOnly e são invalidadas quando a chave vinculada é revogada.
+- A pasta `functions/` na raiz contém somente adaptadores de roteamento do Pages; a implementação fica em `apps/api/functions`.
+
+### Organização do código
+
+- Componentes React ficam em pastas com `index.tsx`; estilos e tipos específicos ficam em `styles.ts` e `types.ts`.
+- Hooks ficam em `apps/frontend/src/hooks/<hook>/`, com `index.ts[x]` e arquivos auxiliares quando necessários.
+- Componentes usam PascalCase (por exemplo, `AppShell`); pastas e arquivos seguem camelCase (por exemplo, `appShell` e `globalStyles.ts`).
+- O `package.json` e o `package-lock.json` na raiz gerenciam os workspaces npm.
+
+## Desenvolvimento local
+
+Requer Node.js 22.22.2 ou superior e npm.
+
+1. Instale as dependências na raiz com `npm install`.
+2. Vincule o workspace ao projeto Neon com `neon link --project-id <project-id>` e selecione a branch `dev` com `neon checkout dev`. A branch `dev` já contém o schema inicial; migrations já aplicadas não devem ser reaplicadas.
+3. Configure as variáveis das Pages Functions com `neon env pull --env DATABASE_URL,NEON_AUTH_JWKS_URL --file .dev.vars`.
+4. Configure `.env.local` com `VITE_NEON_AUTH_URL` igual à `NEON_AUTH_BASE_URL` da branch `dev` e mantenha `VITE_MOCK_AUTH=false` (padrão). Para obter a URL, use `neon env pull --env NEON_AUTH_BASE_URL --file .env.local`. Reinicie o Vite após alterar o arquivo.
+5. Para trabalhar apenas na interface, inicie o front-end com `npm run dev`.
+6. Para exercitar a aplicação completa, gere os arquivos estáticos com `npm run build` e inicie a API com `npm run dev:api` em um terminal. Em outro terminal, inicie `npm run dev --workspace @gestor/frontend -- --host 127.0.0.1 --port 5174`. O Vite encaminha `/api` ao Wrangler, que executa as Pages Functions na porta 8788 e lê `.dev.vars`; gere o build novamente após alterações nas funções da API.
+
+Neon Auth está habilitado na branch `dev`, separado de `main`. Configure os domínios de confiança necessários no Neon Auth; crie um usuário nessa branch e vincule seu ID a `app_users` antes do primeiro login. Desative o cadastro público se a operação for somente por convite.
+
+O login administrativo usa e-mail e senha do Neon Auth; **Esqueceu a senha?** envia um link de recuperação. Os links expiram após uma hora. Clientes acessam `/client-login` com a chave emitida pela administradora.
+
+### Primeiro acesso administrativo
+
+Depois de habilitar o Neon Auth e criar a conta administrativa, obtenha o ID do usuário no Neon e execute uma única vez, substituindo os valores:
+
+```sql
+INSERT INTO app_users (auth_user_id, email, display_name, role)
+VALUES ('<NEON_AUTH_USER_ID>', '<EMAIL_ADMIN>', '<NOME_ADMIN>', 'admin');
+```
+
+O índice `one_global_admin` impede a criação de um segundo perfil administrativo. Depois, a administradora cria organizações e gera uma chave para cada cliente pela tela **Organizações**. A chave completa é mostrada somente na criação; deve ser copiada e compartilhada com o cliente. A lista administrativa exibe apenas o prefixo, e a revogação encerra também as sessões existentes.
+
+A migration `apps/api/migrations/0002_client_access_keys.sql` cria as tabelas e políticas RLS necessárias para chaves e sessões de clientes e já foi aplicada na branch Neon `dev`. Aplique-a uma única vez em cada ambiente novo antes de usar o fluxo.
+
+A migration `apps/api/migrations/0003_client_key_prefixes.sql` normaliza os prefixos exibidos para as chaves já existentes e também foi aplicada em `dev`. Chaves já emitidas continuam válidas; clientes precisarão entrar novamente para receber o cookie de sessão com o novo nome.
+
+## Build e verificações
+
+```bash
+npm run build
+npm run typecheck:functions
+npm run lint
+npm test
+```
+
+## Cloudflare Pages
+
+Configure o projeto Pages com diretório raiz na raiz deste repositório, comando de build `npm run build` e diretório de saída `apps/frontend/dist`. A pasta raiz `functions/` encaminha as rotas para a implementação em `apps/api/functions`; `apps/frontend/public/_redirects` preserva o roteamento da SPA.
+
+Defina `VITE_NEON_AUTH_URL` como variável de build pública. Configure `DATABASE_URL` (preferencialmente a URL pooled do Neon) e `NEON_AUTH_JWKS_URL` como variáveis de runtime das Pages Functions em cada ambiente. Não comite valores reais dessas variáveis.
+
+## Fluxo diário
+
+1. A administradora cria a organização, seus canais/assuntos e um período de monitoramento.
+2. A administradora cadastra notícias, comentários e recomendações enquanto o período está em processamento.
+3. Ao concluir e revisar a alimentação, publica o período.
+4. Clientes consultam apenas períodos publicados da própria organização e exportam PDF/Excel. Um período em processamento não substitui o último publicado.
+
+## Limites atuais
+
+Captura automatizada e classificação por IA não fazem parte da primeira entrega. Fórmulas finais dos indicadores e conteúdo de exemplo devem ser validados com um relatório real antes de serem tratados como regras de negócio.

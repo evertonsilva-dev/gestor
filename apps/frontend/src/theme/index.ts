@@ -1,0 +1,28 @@
+export const theme = {
+  colors: {
+    background: '#f4f5f7',
+    surface: '#ffffff',
+    surfaceMuted: '#f7f8fa',
+    ink: '#20242d',
+    inkSoft: '#6f7784',
+    navy: '#101722',
+    navyLight: '#1b2635',
+    gold: '#e8b914',
+    goldSoft: '#fff3c4',
+    blue: '#62a9cf',
+    blueSoft: '#e4f2f8',
+    red: '#f36d60',
+    redSoft: '#ffebe8',
+    green: '#3e9678',
+    greenSoft: '#e4f3ed',
+    border: '#e4e7ec',
+    danger: '#bd3f39',
+  },
+  radius: {
+    small: '8px',
+    medium: '14px',
+    large: '20px',
+    pill: '999px',
+  },
+  shadow: '0 12px 32px rgba(27, 38, 53, 0.06)',
+} as const

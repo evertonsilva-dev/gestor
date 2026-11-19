@@ -1,0 +1,30 @@
+{
+  "name": "@gestor/frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b ../../tsconfig.json && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^7.0.7",
+    "@neon/auth": "^0.8.2",
+    "chart.js": "^4.6.1",
+    "date-fns": "^4.4.0",
+    "fflate": "^0.8.3",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.74.0",
+    "rc-picker": "^4.11.3",
+    "react": "^19.1.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.92.0",
+    "react-router-dom": "^7.18.5",
+    "react-select": "^5.10.2",
+    "styled-components": "^6.6.0",
+    "zod": "^4.6.7"
+  }
+}

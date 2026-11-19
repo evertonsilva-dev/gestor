@@ -1,0 +1,13 @@
+{
+  "name": "@gestor/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ../../functions/tsconfig.json"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.1",
+    "jose": "^6.2.17"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "gestor",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/frontend",
+    "apps/api"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @gestor/frontend",
+    "dev:api": "wrangler pages dev apps/frontend/dist --port 8788",
+    "build": "npm run build --workspace @gestor/frontend",
+    "lint": "eslint .",
+    "preview": "npm run preview --workspace @gestor/frontend",
+    "test": "npm run test --workspace @gestor/frontend",
+    "typecheck:functions": "npm run typecheck --workspace @gestor/api"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261118.1",
+    "@eslint/js": "^9.25.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^6.3.0",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.73.0",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.164.0"
+  }
+}

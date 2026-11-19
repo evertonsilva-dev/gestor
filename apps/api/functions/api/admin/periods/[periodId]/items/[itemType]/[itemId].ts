@@ -1,0 +1,169 @@
+import { z } from 'zod'
+import { requireActor, requireAdmin } from '../../../../../../_lib/auth'
+import type { Environment } from '../../../../../../_lib/env'
+import { getScopedDatabase } from '../../../../../../_lib/database'
+import { apiError, json, readJson } from '../../../../../../_lib/http'
+
+const newsUpdate = z.object({
+  title: z.string().trim().min(3).max(500).optional(),
+  sourceUrl: z.string().url().nullable().optional(),
+  publishedAt: z.string().datetime().optional(),
+  sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
+  notes: z.string().trim().max(4000).nullable().optional(),
+}).refine((value) => Object.keys(value).length > 0)
+
+const commentUpdate = z.object({
+  content: z.string().trim().min(1).max(4000).optional(),
+  commentedAt: z.string().datetime().optional(),
+  profile: z.enum(['militante', 'simpatizante', 'detrator']).optional(),
+  sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
+}).refine((value) => Object.keys(value).length > 0)
+
+const recommendationUpdate = z.object({
+  category: z.enum(['insight', 'action', 'example']).optional(),
+  content: z.string().trim().min(1).max(4000).optional(),
+}).refine((value) => Object.keys(value).length > 0)
+
+export const onRequestPatch: PagesFunction<Environment> = async ({ request, env, params }) => {
+  try {
+    const actor = await requireActor(request, env)
+    if (actor instanceof Response) return actor
+    const denied = requireAdmin(actor)
+    if (denied) return denied
+
+    const body = await readJson<Record<string, unknown>>(request)
+    const sql = getScopedDatabase(env, actor.id)
+    let rows: Record<string, unknown>[]
+
+    if (params.itemType === 'news') {
+      const parsed = newsUpdate.safeParse(body)
+      if (!parsed.success) return json({ error: 'Informe os campos válidos da notícia.' }, 400)
+      rows = await sql`
+        WITH updated AS (
+          UPDATE news_items
+          SET title = COALESCE(${parsed.data.title ?? null}, title),
+              source_url = CASE WHEN ${Object.hasOwn(parsed.data, 'sourceUrl')} THEN ${parsed.data.sourceUrl ?? null} ELSE source_url END,
+              published_at = COALESCE(${parsed.data.publishedAt ?? null}, published_at),
+              sentiment = COALESCE(${parsed.data.sentiment ?? null}, sentiment),
+              notes = CASE WHEN ${Object.hasOwn(parsed.data, 'notes')} THEN ${parsed.data.notes ?? null} ELSE notes END
+          WHERE id = ${params.itemId} AND period_id = ${params.periodId}
+          RETURNING id, organization_id AS "organizationId"
+        ),
+        audited AS (
+          INSERT INTO audit_events (actor_user_id, organization_id, action, entity_type, entity_id)
+          SELECT ${actor.id}, "organizationId", 'news.updated', 'news_item', id::text FROM updated
+          RETURNING id
+        )
+        SELECT updated.id FROM updated CROSS JOIN audited
+      `
+    } else if (params.itemType === 'comment') {
+      const parsed = commentUpdate.safeParse(body)
+      if (!parsed.success) return json({ error: 'Informe os campos válidos do comentário.' }, 400)
+      rows = await sql`
+        WITH updated AS (
+          UPDATE analyzed_comments
+          SET content = COALESCE(${parsed.data.content ?? null}, content),
+              commented_at = COALESCE(${parsed.data.commentedAt ?? null}, commented_at),
+              profile = COALESCE(${parsed.data.profile ?? null}, profile),
+              sentiment = COALESCE(${parsed.data.sentiment ?? null}, sentiment)
+          WHERE id = ${params.itemId} AND period_id = ${params.periodId}
+          RETURNING id, organization_id AS "organizationId"
+        ),
+        audited AS (
+          INSERT INTO audit_events (actor_user_id, organization_id, action, entity_type, entity_id)
+          SELECT ${actor.id}, "organizationId", 'comment.updated', 'analyzed_comment', id::text FROM updated
+          RETURNING id
+        )
+        SELECT updated.id FROM updated CROSS JOIN audited
+      `
+    } else if (params.itemType === 'recommendation') {
+      const parsed = recommendationUpdate.safeParse(body)
+      if (!parsed.success) return json({ error: 'Informe os campos válidos da recomendação.' }, 400)
+      rows = await sql`
+        WITH updated AS (
+          UPDATE recommendations
+          SET category = COALESCE(${parsed.data.category ?? null}, category),
+              content = COALESCE(${parsed.data.content ?? null}, content)
+          WHERE id = ${params.itemId} AND period_id = ${params.periodId}
+          RETURNING id, organization_id AS "organizationId"
+        ),
+        audited AS (
+          INSERT INTO audit_events (actor_user_id, organization_id, action, entity_type, entity_id)
+          SELECT ${actor.id}, "organizationId", 'recommendation.updated', 'recommendation', id::text FROM updated
+          RETURNING id
+        )
+        SELECT updated.id FROM updated CROSS JOIN audited
+      `
+    } else {
+      return json({ error: 'Tipo de registro inválido.' }, 404)
+    }
+
+    if (rows.length === 0) return json({ error: 'Registro não encontrado ou período já publicado.' }, 404)
+    return json({ updated: true })
+  } catch (error) {
+    return apiError(error)
+  }
+}
+
+export const onRequestDelete: PagesFunction<Environment> = async ({ request, env, params }) => {
+  try {
+    const actor = await requireActor(request, env)
+    if (actor instanceof Response) return actor
+    const denied = requireAdmin(actor)
+    if (denied) return denied
+
+    const sql = getScopedDatabase(env, actor.id)
+    const table = params.itemType === 'news'
+      ? 'news_items'
+      : params.itemType === 'comment'
+        ? 'analyzed_comments'
+        : params.itemType === 'recommendation'
+          ? 'recommendations'
+          : null
+    if (!table) return json({ error: 'Tipo de registro inválido.' }, 404)
+
+    const rows = table === 'news_items'
+      ? await sql`
+          WITH removed AS (
+            DELETE FROM news_items WHERE id = ${params.itemId} AND period_id = ${params.periodId}
+            RETURNING id, organization_id AS "organizationId"
+          ),
+          audited AS (
+            INSERT INTO audit_events (actor_user_id, organization_id, action, entity_type, entity_id)
+            SELECT ${actor.id}, "organizationId", 'news.deleted', 'news_item', id::text FROM removed
+            RETURNING id
+          )
+          SELECT removed.id FROM removed CROSS JOIN audited
+        `
+      : table === 'analyzed_comments'
+        ? await sql`
+            WITH removed AS (
+              DELETE FROM analyzed_comments WHERE id = ${params.itemId} AND period_id = ${params.periodId}
+              RETURNING id, organization_id AS "organizationId"
+            ),
+            audited AS (
+              INSERT INTO audit_events (actor_user_id, organization_id, action, entity_type, entity_id)
+              SELECT ${actor.id}, "organizationId", 'comment.deleted', 'analyzed_comment', id::text FROM removed
+              RETURNING id
+            )
+            SELECT removed.id FROM removed CROSS JOIN audited
+          `
+        : await sql`
+            WITH removed AS (
+              DELETE FROM recommendations WHERE id = ${params.itemId} AND period_id = ${params.periodId}
+              RETURNING id, organization_id AS "organizationId"
+            ),
+            audited AS (
+              INSERT INTO audit_events (actor_user_id, organization_id, action, entity_type, entity_id)
+              SELECT ${actor.id}, "organizationId", 'recommendation.deleted', 'recommendation', id::text FROM removed
+              RETURNING id
+            )
+            SELECT removed.id FROM removed CROSS JOIN audited
+          `
+
+    if (rows.length === 0) return json({ error: 'Registro não encontrado ou período já publicado.' }, 404)
+    return new Response(null, { status: 204 })
+  } catch (error) {
+    return apiError(error)
+  }
+}
