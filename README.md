@@ -66,6 +66,10 @@ Defina `VITE_NEON_AUTH_URL` como variável pública de build. Configure `DATABAS
 
 No primeiro deploy, crie na raiz `.env.worker.production.local` com `DATABASE_URL` e `NEON_AUTH_JWKS_URL` de produção e envie o arquivo com `npm run deploy:worker -- --secrets-file ../../.env.worker.production.local`. O arquivo é ignorado pelo Git; não use os valores de desenvolvimento de `.dev.vars`. Após o primeiro deploy, ele pode ser removido: secrets não reenviados são preservados pelo Worker nas versões seguintes. Defina também `VITE_NEON_AUTH_URL` de produção no ambiente de build ou em `.env.production.local`.
 
+### Preview do branch `develop`
+
+Cada push em `develop` publica automaticamente um Worker separado em `gestor-preview`, usando o Neon `dev`. A URL é `https://gestor-preview.evertonsilvadev.workers.dev`. Para habilitar o workflow `.github/workflows/deploy-worker-preview.yml`, configure no GitHub os secrets `CLOUDFLARE_API_TOKEN` (permissão Workers Editor), `CLOUDFLARE_ACCOUNT_ID`, `DEVELOP_DATABASE_URL` e `DEVELOP_NEON_AUTH_JWKS_URL`, além da variável `DEVELOP_NEON_AUTH_URL`. Os três valores Neon devem pertencer à branch `dev`. O deploy local pode ser feito com `npm run deploy:preview`, usando `.dev.vars` e `.env.local`.
+
 ## Fluxo diário
 
 1. A administradora cria a organização, seus canais/assuntos e um período de monitoramento.

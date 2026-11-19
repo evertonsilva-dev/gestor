@@ -1,0 +1,68 @@
+name: Deploy Worker preview
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: worker-preview
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_SEND_TELEMETRY: "false"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prepare development secrets
+        env:
+          DEVELOP_DATABASE_URL: ${{ secrets.DEVELOP_DATABASE_URL }}
+          DEVELOP_NEON_AUTH_JWKS_URL: ${{ secrets.DEVELOP_NEON_AUTH_JWKS_URL }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const entries = [
+            ['DEVELOP_DATABASE_URL', 'DATABASE_URL', process.env.DEVELOP_DATABASE_URL],
+            ['DEVELOP_NEON_AUTH_JWKS_URL', 'NEON_AUTH_JWKS_URL', process.env.DEVELOP_NEON_AUTH_JWKS_URL],
+          ]
+
+          const secrets = {}
+          for (const [secretName, bindingName, value] of entries) {
+            if (!value) throw new Error(`Missing GitHub secret ${secretName}`)
+            secrets[bindingName] = value
+          }
+
+          fs.writeFileSync(
+            `${process.env.RUNNER_TEMP}/worker-preview-secrets.json`,
+            JSON.stringify(secrets),
+            { mode: 0o600 },
+          )
+          NODE
+      - name: Build preview Worker
+        env:
+          VITE_NEON_AUTH_URL: ${{ vars.DEVELOP_NEON_AUTH_URL }}
+        run: |
+          if [ -z "$VITE_NEON_AUTH_URL" ]; then echo "::error::Missing repository variable DEVELOP_NEON_AUTH_URL"; exit 1; fi
+          npm run build:preview --workspace @gestor/frontend
+      - name: Deploy preview Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        working-directory: apps/frontend
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::Missing CLOUDFLARE_API_TOKEN"; exit 1; fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "::error::Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; fi
+          npx cf deploy --prebuilt --mode preview --secrets-file "$RUNNER_TEMP/worker-preview-secrets.json"
+      - name: Remove temporary secrets
+        if: always()
+        run: rm -f "$RUNNER_TEMP/worker-preview-secrets.json"

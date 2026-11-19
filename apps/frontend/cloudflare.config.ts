@@ -1,9 +1,9 @@
 import { bindings, defineConfig } from 'cf/config'
 import * as entrypoint from './worker/index.ts' with { type: 'cf-worker' }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   worker: {
-    name: 'gestor',
+    name: mode === 'preview' ? 'gestor-preview' : 'gestor',
     compatibilityDate: '2026-11-19',
     entrypoint,
     env: {
@@ -24,4 +24,4 @@ export default defineConfig({
       traces: { enabled: true, headSamplingRate: 0.1 },
     },
   },
-})
+}))

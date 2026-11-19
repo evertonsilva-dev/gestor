@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc -b ../../tsconfig.json",
+    "build:preview": "vite build --mode preview && tsc -b ../../tsconfig.json",
     "deploy": "npm run build && cf deploy --prebuilt",
+    "deploy:preview": "npm run build:preview && cf deploy --prebuilt --mode preview --secrets-file ../../.dev.vars",
     "preview": "vite preview",
     "test": "vitest run"
   },

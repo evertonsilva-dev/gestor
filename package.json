@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "preview": "npm run preview --workspace @gestor/frontend",
     "deploy:worker": "npm run deploy --workspace @gestor/frontend --",
+    "deploy:preview": "npm run deploy:preview --workspace @gestor/frontend --",
     "test": "npm run test --workspace @gestor/frontend",
     "typecheck:functions": "npm run typecheck --workspace @gestor/api"
   },
