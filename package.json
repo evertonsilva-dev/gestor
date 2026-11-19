@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "npm run dev --workspace @gestor/frontend",
-    "dev:api": "npm run dev:api --workspace @gestor/frontend",
+    "dev:api": "wrangler pages dev apps/frontend/dist --port 8788",
     "build": "npm run build --workspace @gestor/frontend",
     "lint": "eslint .",
     "preview": "npm run preview --workspace @gestor/frontend",

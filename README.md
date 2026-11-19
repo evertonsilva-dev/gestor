@@ -10,7 +10,7 @@ Plataforma multicliente para organizar a alimentação manual diária dos dados 
 - Neon Postgres acessado somente pelas funções com `@neondatabase/serverless`.
 - A autorização de administradores usa `app_users`; a chave do cliente é armazenada como hash e vinculada a uma organização.
 - Sessões de cliente usam cookie HttpOnly e são invalidadas quando a chave vinculada é revogada.
-- Os adaptadores de rotas do Pages ficam em `apps/frontend/functions`, junto ao app que o Cloudflare Pages detecta; a implementação fica em `apps/api/functions`.
+- Os adaptadores de rotas do Pages ficam em `functions/` na raiz do repositório, e encaminham para a implementação em `apps/api/functions`.
 
 ### Organização do código
 
@@ -60,7 +60,7 @@ npm test
 
 ## Cloudflare Pages
 
-Configure o projeto Pages com diretório raiz `apps/frontend`, preset `Vite`, comando de build `npm run build` e diretório de saída `dist`. Os adaptadores em `apps/frontend/functions` encaminham as rotas para a implementação em `apps/api/functions`; `apps/frontend/public/_redirects` preserva o roteamento da SPA. Configure o diretório raiz como o app do workspace para que a detecção do Cloudflare não seja executada na raiz do monorepo.
+Configure o projeto Pages com diretório raiz na raiz do repositório, preset `None`, comando de build `npm run build` e diretório de saída `apps/frontend/dist`. `functions/` encaminha as rotas para a implementação em `apps/api/functions`; `apps/frontend/public/_redirects` preserva o roteamento da SPA. Configure esses valores manualmente para evitar executar a detecção automática do Cloudflare na raiz do monorepo.
 
 Defina `VITE_NEON_AUTH_URL` como variável de build pública. Configure `DATABASE_URL` (preferencialmente a URL pooled do Neon) e `NEON_AUTH_JWKS_URL` como variáveis de runtime das Pages Functions em cada ambiente. Não comite valores reais dessas variáveis.
 
