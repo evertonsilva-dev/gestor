@@ -4,13 +4,13 @@ Plataforma multicliente para organizar a alimentação manual diária dos dados 
 
 ## Arquitetura
 
-- Monorepo npm com duas aplicações: `apps/frontend` (React, Vite, TypeScript, styled-components, react-select, react-chartjs-2/Chart.js e rc-picker) e `apps/api` (Cloudflare Pages Functions e migrations).
-- A API é same-origin e usa o runtime Workers; não há um servidor Node/Express persistente.
+- Monorepo npm com duas aplicações: `apps/frontend` (React, Vite, TypeScript, styled-components, react-select, react-chartjs-2/Chart.js e rc-picker) e `apps/api` (rotas HTTP e migrations).
+- A API é same-origin e executa em Cloudflare Workers; os arquivos estáticos da SPA usam Workers Static Assets.
 - Neon Auth para login administrativo por e-mail e senha; clientes entram com chaves de acesso próprias da aplicação.
 - Neon Postgres acessado somente pelas funções com `@neondatabase/serverless`.
 - A autorização de administradores usa `app_users`; a chave do cliente é armazenada como hash e vinculada a uma organização.
 - Sessões de cliente usam cookie HttpOnly e são invalidadas quando a chave vinculada é revogada.
-- Os adaptadores de rotas do Pages ficam em `functions/` na raiz do repositório, e encaminham para a implementação em `apps/api/functions`.
+- As implementações das rotas ficam em `apps/api/functions`; o Worker carrega esses handlers diretamente.
 
 ### Organização do código
 
@@ -25,10 +25,10 @@ Requer Node.js 22.22.2 ou superior e npm.
 
 1. Instale as dependências na raiz com `npm install`.
 2. Vincule o workspace ao projeto Neon com `neon link --project-id <project-id>` e selecione a branch `dev` com `neon checkout dev`. A branch `dev` já contém o schema inicial; migrations já aplicadas não devem ser reaplicadas.
-3. Configure as variáveis das Pages Functions com `neon env pull --env DATABASE_URL,NEON_AUTH_JWKS_URL --file .dev.vars`.
+3. Configure as variáveis locais do Worker com `neon env pull --env DATABASE_URL,NEON_AUTH_JWKS_URL --file .dev.vars`.
 4. Configure `.env.local` com `VITE_NEON_AUTH_URL` igual à `NEON_AUTH_BASE_URL` da branch `dev` e mantenha `VITE_MOCK_AUTH=false` (padrão). Para obter a URL, use `neon env pull --env NEON_AUTH_BASE_URL --file .env.local`. Reinicie o Vite após alterar o arquivo.
 5. Para trabalhar apenas na interface, inicie o front-end com `npm run dev`.
-6. Para exercitar a aplicação completa, gere os arquivos estáticos com `npm run build` e inicie a API com `npm run dev:api` em um terminal. Em outro terminal, inicie `npm run dev --workspace @gestor/frontend -- --host 127.0.0.1 --port 5174`. O Vite encaminha `/api` ao Wrangler, que executa as Pages Functions na porta 8788 e lê `.dev.vars`; gere o build novamente após alterações nas funções da API.
+6. Para exercitar a aplicação completa, inicie `npm run dev`. O plugin do Cloudflare executa a SPA e o Worker juntos no runtime local e lê os valores de `.dev.vars`.
 
 Neon Auth está habilitado na branch `dev`, separado de `main`. Configure os domínios de confiança necessários no Neon Auth; crie um usuário nessa branch e vincule seu ID a `app_users` antes do primeiro login. Desative o cadastro público se a operação for somente por convite.
 
@@ -58,11 +58,13 @@ npm run lint
 npm test
 ```
 
-## Cloudflare Pages
+## Cloudflare Workers
 
-Configure o projeto Pages com diretório raiz na raiz do repositório, preset `None`, comando de build `npm run build` e diretório de saída `apps/frontend/dist`. `functions/` encaminha as rotas para a implementação em `apps/api/functions`; `apps/frontend/public/_redirects` preserva o roteamento da SPA. Configure esses valores manualmente para evitar executar a detecção automática do Cloudflare na raiz do monorepo.
+O projeto Worker fica em `apps/frontend` e é configurado por `cloudflare.config.ts`. A SPA é publicada como Workers Static Assets e `/api/*` é encaminhado ao Worker. `npm run build` valida o Worker; `npm run deploy:worker` publica somente o Worker com o `cf` CLI.
 
-Defina `VITE_NEON_AUTH_URL` como variável de build pública. Configure `DATABASE_URL` (preferencialmente a URL pooled do Neon) e `NEON_AUTH_JWKS_URL` como variáveis de runtime das Pages Functions em cada ambiente. Não comite valores reais dessas variáveis.
+Defina `VITE_NEON_AUTH_URL` como variável pública de build. Configure `DATABASE_URL` (preferencialmente a URL pooled do Neon) e `NEON_AUTH_JWKS_URL` como secrets do Worker. Não comite valores reais.
+
+No primeiro deploy, crie na raiz `.env.worker.production.local` com `DATABASE_URL` e `NEON_AUTH_JWKS_URL` de produção e envie o arquivo com `npm run deploy:worker -- --secrets-file ../../.env.worker.production.local`. O arquivo é ignorado pelo Git; não use os valores de desenvolvimento de `.dev.vars`. Após o primeiro deploy, ele pode ser removido: secrets não reenviados são preservados pelo Worker nas versões seguintes. Defina também `VITE_NEON_AUTH_URL` de produção no ambiente de build ou em `.env.production.local`.
 
 ## Fluxo diário
 

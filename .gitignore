@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 .wrangler/
+.cloudflare/
 *.local
 .env
 .env.*
@@ -30,4 +31,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.wrangler/*
