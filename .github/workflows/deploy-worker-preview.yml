@@ -24,18 +24,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Build preview Worker
-        env:
-          VITE_NEON_AUTH_URL: ${{ vars.DEVELOP_NEON_AUTH_URL }}
-        run: |
-          if [ -z "$VITE_NEON_AUTH_URL" ]; then echo "::error::Missing repository variable DEVELOP_NEON_AUTH_URL"; exit 1; fi
-          npm run build:preview --workspace @gestor/frontend
+      - name: Typecheck frontend
+        run: npm run typecheck --workspace @gestor/frontend
       - name: Deploy preview Worker
         env:
+          VITE_NEON_AUTH_URL: ${{ vars.DEVELOP_NEON_AUTH_URL }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         working-directory: apps/frontend
         run: |
+          if [ -z "$VITE_NEON_AUTH_URL" ]; then echo "::error::Missing repository variable DEVELOP_NEON_AUTH_URL"; exit 1; fi
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::Missing CLOUDFLARE_API_TOKEN"; exit 1; fi
           if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "::error::Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; fi
-          npx cf previews deploy --prebuilt --preview-name develop
+          npx cf previews deploy --preview-name develop

@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc -b ../../tsconfig.json",
-    "build:preview": "vite build --mode preview && tsc -b ../../tsconfig.json",
+    "typecheck": "tsc -b ../../tsconfig.json",
+    "build": "vite build && npm run typecheck",
+    "build:preview": "vite build --mode preview && npm run typecheck",
     "deploy": "npm run build && cf deploy --prebuilt",
-    "deploy:preview": "npm run build:preview && cf previews deploy --prebuilt --preview-name develop",
+    "deploy:preview": "npm run typecheck && cf previews deploy --preview-name develop",
     "preview": "vite preview",
     "test": "vitest run"
   },
