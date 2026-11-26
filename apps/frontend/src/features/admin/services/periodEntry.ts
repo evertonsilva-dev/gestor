@@ -16,15 +16,9 @@ function requiredValue(formData: FormData, field: string): string {
   return value.trim()
 }
 
-function dateTimeValue(formData: FormData, field: string): string {
-  const value = requiredValue(formData, field)
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    throw new Error('Informe uma data e hora válidas.')
-  }
-
-  return date.toISOString()
+function optionalSentiment(formData: FormData) {
+  const value = String(formData.get('sentiment') ?? '').trim()
+  return value ? sentimentSchema.parse(value) : undefined
 }
 
 export function buildPeriodItem(formData: FormData): PeriodItemInput {
@@ -32,25 +26,28 @@ export function buildPeriodItem(formData: FormData): PeriodItemInput {
 
   if (type === 'news') {
     const sourceUrl = String(formData.get('sourceUrl') ?? '').trim()
+    const sentiment = optionalSentiment(formData)
     return {
       type,
       channelId: requiredValue(formData, 'channelId'),
+      sourcePageId: String(formData.get('sourcePageId') ?? '').trim() || null,
       title: requiredValue(formData, 'title'),
       sourceUrl: sourceUrl || null,
-      publishedAt: dateTimeValue(formData, 'publishedAt'),
-      sentiment: sentimentSchema.parse(requiredValue(formData, 'sentiment')),
+      ...(sentiment ? { sentiment } : {}),
       notes: String(formData.get('notes') ?? '').trim() || null,
     }
   }
 
   if (type === 'comment') {
+    const sentiment = optionalSentiment(formData)
     return {
       type,
       channelId: requiredValue(formData, 'channelId'),
+      sourcePageId: String(formData.get('sourcePageId') ?? '').trim() || null,
       content: requiredValue(formData, 'content'),
-      commentedAt: dateTimeValue(formData, 'commentedAt'),
+      newsItemId: String(formData.get('newsItemId') ?? '').trim() || null,
       profile: profileSchema.parse(requiredValue(formData, 'profile')),
-      sentiment: sentimentSchema.parse(requiredValue(formData, 'sentiment')),
+      ...(sentiment ? { sentiment } : {}),
     }
   }
 
@@ -71,7 +68,23 @@ export function parseKeywords(value: string): string[] {
 
 export function buildPeriodItemUpdate(item: PeriodItem, formData: FormData): PeriodItemUpdate {
   if (item.type === 'news') {
-    return { title: requiredValue(formData, 'title') }
+    return {
+      title: requiredValue(formData, 'title'),
+      sourceUrl: String(formData.get('sourceUrl') ?? '').trim() || null,
+      sourcePageId: String(formData.get('sourcePageId') ?? '').trim() || null,
+      sentiment: sentimentSchema.parse(requiredValue(formData, 'sentiment')),
+      notes: String(formData.get('notes') ?? '').trim() || null,
+    }
+  }
+
+  if (item.type === 'comment') {
+    return {
+      content: requiredValue(formData, 'content'),
+      sourcePageId: String(formData.get('sourcePageId') ?? '').trim() || null,
+      newsItemId: String(formData.get('newsItemId') ?? '').trim() || null,
+      profile: profileSchema.parse(requiredValue(formData, 'profile')),
+      sentiment: sentimentSchema.parse(requiredValue(formData, 'sentiment')),
+    }
   }
 
   return { content: requiredValue(formData, 'content') }

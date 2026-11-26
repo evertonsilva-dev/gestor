@@ -4,15 +4,15 @@ import type { DashboardData } from '@/types/domain'
 import { formatShortDate } from '@/lib/dateFormat'
 
 const sentimentLabel = {
-  positive: 'Positivo',
+  positive: 'Favorável',
   neutral: 'Neutro',
-  negative: 'Negativo',
+  negative: 'Crítico',
 } as const
 
 const profileLabel = {
-  militante: 'Militante',
+  militante: 'Apoiador',
   simpatizante: 'Simpatizante',
-  detrator: 'Detrator',
+  detrator: 'Opositor',
 } as const
 
 const recommendationLabel = {
@@ -49,7 +49,7 @@ export async function downloadExcelReport(data: DashboardData): Promise<void> {
       name: 'Painel',
       headers: [],
       rows: [
-        ['RELATÓRIO DE MONITORAMENTO'],
+        ['ARQUEA TECNOLOGIA | RELATÓRIO DE MONITORAMENTO'],
         [data.organization.name],
         [`Período: ${formatShortDate(data.selectedPeriod.startDate)} a ${formatShortDate(data.selectedPeriod.endDate)}`],
         [`Publicado em: ${formatShortDate(data.selectedPeriod.publishedAt)}`],
@@ -89,7 +89,7 @@ export async function downloadExcelReport(data: DashboardData): Promise<void> {
     },
     {
       name: 'Sentimentos',
-      headers: ['Canal', 'Positivo', 'Neutro', 'Negativo', 'Total'],
+      headers: ['Canal', 'Favorável', 'Neutro', 'Crítico', 'Total'],
       rows: sentimentRows,
       hasFilter: true,
     },
@@ -102,9 +102,8 @@ export async function downloadExcelReport(data: DashboardData): Promise<void> {
     },
     {
       name: 'Notícias',
-      headers: ['Data', 'Canal', 'Notícia', 'Sentimento', 'Fonte'],
+      headers: ['Canal', 'Notícia', 'Sentimento', 'Fonte'],
       rows: data.news.map((row) => [
-        formatShortDate(row.publishedAt),
         row.channelName,
         row.title,
         sentimentLabel[row.sentiment],
@@ -114,10 +113,10 @@ export async function downloadExcelReport(data: DashboardData): Promise<void> {
     },
     {
       name: 'Comentários',
-      headers: ['Data', 'Canal', 'Comentário', 'Perfil', 'Sentimento'],
+      headers: ['Canal', 'Notícia relacionada', 'Comentário', 'Perfil', 'Sentimento'],
       rows: data.comments.map((row) => [
-        formatShortDate(row.commentedAt),
         row.channelName,
+        row.newsTitle ?? '',
         row.content,
         profileLabel[row.profile],
         sentimentLabel[row.sentiment],
@@ -262,8 +261,8 @@ function stylesXml(): string {
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
     + '<numFmts count="1"><numFmt numFmtId="164" formatCode="0%"/></numFmts>'
-    + '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FF101722"/><sz val="16"/><name val="Calibri"/></font></fonts>'
-    + '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF101722"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F4F7"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    + '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FF3A1C30"/><sz val="16"/><name val="Calibri"/></font></fonts>'
+    + '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF3A1C30"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFDF9F5"/><bgColor indexed="64"/></patternFill></fill></fills>'
     + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
     + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
     + '<cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs>'
@@ -297,9 +296,9 @@ function sentimentChartXml(rows: DashboardData['sentimentByChannel']): string {
   const lastRow = rows.length + 1
   const categories = rows.map((row) => row.channelName)
   const series = [
-    { column: 'B', label: 'Positivo', color: '62A9CF', values: rows.map((row) => row.positive) },
-    { column: 'C', label: 'Neutro', color: 'E8B914', values: rows.map((row) => row.neutral) },
-    { column: 'D', label: 'Negativo', color: 'F36D60', values: rows.map((row) => row.negative) },
+    { column: 'B', label: 'Favorável', color: 'D28C6E', values: rows.map((row) => row.positive) },
+    { column: 'C', label: 'Neutro', color: 'F2B06F', values: rows.map((row) => row.neutral) },
+    { column: 'D', label: 'Crítico', color: 'F36D60', values: rows.map((row) => row.negative) },
   ].map((item, index) => chartSeries(
     `'Sentimentos'!$${item.column}$1`,
     item.label,
@@ -317,7 +316,7 @@ function sentimentChartXml(rows: DashboardData['sentimentByChannel']): string {
 function audienceChartXml(rows: Array<Array<string | number>>): string {
   const categories = rows.map((row) => String(row[0]))
   const values = rows.map((row) => Number(row[1]))
-  const colors = ['62A9CF', 'E8B914', 'F36D60']
+  const colors = ['3A1C30', 'D28C6E', 'F36D60']
   const dataPoints = colors.map((color, index) => `<c:dPt><c:idx val="${index}"/><c:spPr><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:ln><a:noFill/></a:ln></c:spPr></c:dPt>`).join('')
   const lastRow = rows.length + 1
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><c:lang val="pt-BR"/><c:chart><c:plotArea><c:layout/><c:doughnutChart><c:varyColors val="1"/><c:ser><c:idx val="0"/><c:order val="0"/><c:cat>${chartStringReference(`'Público'!$A$2:$A$${lastRow}`, categories)}</c:cat><c:val>${chartNumberReference(`'Público'!$B$2:$B$${lastRow}`, values)}</c:val>${dataPoints}</c:ser><c:dLbls><c:showLegendKey val="0"/><c:showPercent val="1"/><c:showLeaderLines val="1"/></c:dLbls><c:holeSize val="58"/><c:firstSliceAng val="270"/></c:doughnutChart></c:plotArea><c:legend><c:legendPos val="b"/><c:layout/><c:overlay val="0"/></c:legend><c:plotVisOnly val="1"/></c:chart><c:spPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln><a:noFill/></a:ln></c:spPr></c:chartSpace>`
@@ -343,12 +342,12 @@ export function downloadPdfReport(data: DashboardData) {
     pdf.setFillColor(color[0], color[1], color[2])
   }
   const colors = {
-    ink: [32, 36, 45] as const,
-    muted: [111, 119, 132] as const,
-    navy: [16, 23, 34] as const,
-    border: [228, 231, 236] as const,
-    positive: [98, 169, 207] as const,
-    neutral: [232, 185, 20] as const,
+    ink: [58, 28, 48] as const,
+    muted: [116, 95, 105] as const,
+    navy: [58, 28, 48] as const,
+    border: [234, 223, 217] as const,
+    positive: [210, 140, 110] as const,
+    neutral: [242, 176, 111] as const,
     negative: [243, 109, 96] as const,
   }
   let y = 20
@@ -408,20 +407,20 @@ export function downloadPdfReport(data: DashboardData) {
   pdf.setFont('helvetica', 'bold')
   pdf.setFontSize(17)
   pdf.setTextColor(255, 255, 255)
-  pdf.text('GESTOR | MONITORAMENTO', left, 20)
+  pdf.text('ARQUEA TECNOLOGIA | MONITORAMENTO', left, 20)
   pdf.setFontSize(12)
   pdf.text(data.organization.name, left, 33)
   pdf.setFont('helvetica', 'normal')
   pdf.setFontSize(9)
   pdf.setTextColor(220, 226, 234)
-  pdf.text(`Período: ${formatShortDate(data.selectedPeriod.startDate)} a ${formatShortDate(data.selectedPeriod.endDate)}`, left, 44)
+  pdf.text(`Comentários coletados entre ${formatShortDate(data.selectedPeriod.startDate)} e ${formatShortDate(data.selectedPeriod.endDate)}`, left, 44)
   pdf.text(`Publicado em: ${formatShortDate(data.selectedPeriod.publishedAt)}`, left, 53)
   y = 77
 
   const metricGap = 6
   const metricWidth = (contentWidth - metricGap) / 2
   const drawMetric = (x: number, label: string, value: number) => {
-    pdf.setFillColor(247, 248, 250)
+    pdf.setFillColor(253, 249, 245)
     pdf.setDrawColor(...colors.border)
     pdf.roundedRect(x, y - 6, metricWidth, 23, 3, 3, 'FD')
     pdf.setFont('helvetica', 'bold')
@@ -441,9 +440,9 @@ export function downloadPdfReport(data: DashboardData) {
   if (data.sentimentByChannel.length === 0) {
     addText('Nenhum canal cadastrado para este período.', 9, colors.muted)
   } else {
-    drawLegendItem('Positivo', colors.positive, left)
+    drawLegendItem('Favorável', colors.positive, left)
     drawLegendItem('Neutro', colors.neutral, left + 38)
-    drawLegendItem('Negativo', colors.negative, left + 72)
+    drawLegendItem('Crítico', colors.negative, left + 72)
     y += 6
 
     const maxTotal = Math.max(...data.sentimentByChannel.map((row) => row.positive + row.neutral + row.negative), 1)
@@ -514,7 +513,7 @@ export function downloadPdfReport(data: DashboardData) {
   if (data.news.length === 0) addText('Nenhuma notícia registrada neste período.', 9, colors.muted)
   for (const news of data.news) {
     addText(news.title, 9, colors.ink, 'bold')
-    addText(`${formatShortDate(news.publishedAt)} | ${news.channelName} | ${sentimentLabel[news.sentiment]}`, 8, colors.muted, 'normal', 3)
+    addText(`${news.channelName} | ${sentimentLabel[news.sentiment]}`, 8, colors.muted, 'normal', 3)
     if (news.sourceUrl) addText(`Fonte: ${news.sourceUrl}`, 8, colors.muted, 'normal', 3)
     y += 3
   }
@@ -524,7 +523,7 @@ export function downloadPdfReport(data: DashboardData) {
   for (const comment of data.comments) {
     addText(comment.content, 9, colors.ink, 'bold')
     addText(
-      `${formatShortDate(comment.commentedAt)} | ${comment.channelName} | ${profileLabel[comment.profile]} | ${sentimentLabel[comment.sentiment]}`,
+      `${comment.channelName}${comment.newsTitle ? ` | ${comment.newsTitle}` : ''} | ${profileLabel[comment.profile]} | ${sentimentLabel[comment.sentiment]}`,
       8,
       colors.muted,
       'normal',

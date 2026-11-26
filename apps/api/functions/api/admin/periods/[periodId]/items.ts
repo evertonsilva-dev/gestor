@@ -3,24 +3,26 @@ import { requireActor, requireAdmin } from '../../../../_lib/auth'
 import type { Environment } from '../../../../_lib/env'
 import { getScopedDatabase } from '../../../../_lib/database'
 import { apiError, json, readJson } from '../../../../_lib/http'
+import { classifyMissingSentiments, getSentimentContext } from '../../../../_lib/sentiment'
 
 const itemSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('news'),
     channelId: z.string().uuid(),
+    sourcePageId: z.string().uuid().nullable().optional(),
     title: z.string().trim().min(3).max(500),
     sourceUrl: z.string().url().nullable().optional(),
-    publishedAt: z.string().datetime(),
-    sentiment: z.enum(['positive', 'neutral', 'negative']),
+    sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
     notes: z.string().trim().max(4000).nullable().optional(),
   }),
   z.object({
     type: z.literal('comment'),
     channelId: z.string().uuid(),
+    sourcePageId: z.string().uuid().nullable().optional(),
     content: z.string().trim().min(1).max(4000),
-    commentedAt: z.string().datetime(),
+    newsItemId: z.string().uuid().nullable().optional(),
     profile: z.enum(['militante', 'simpatizante', 'detrator']),
-    sentiment: z.enum(['positive', 'neutral', 'negative']),
+    sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
   }),
   z.object({
     type: z.literal('recommendation'),
@@ -46,18 +48,30 @@ export const onRequestGet: PagesFunction<Environment> = async ({ request, env, p
       sql`
         SELECT item.id, 'news' AS type, item.title, item.source_url AS "sourceUrl",
                item.published_at AS "publishedAt", item.sentiment, item.notes,
+               item.sentiment_source AS "sentimentSource",
+               item.sentiment_reason AS "sentimentReason",
+               item.sentiment_keywords AS "sentimentKeywords",
+               item.source_page_id AS "sourcePageId", page.name AS "sourcePageName",
                item.channel_id AS "channelId", channel.name AS "channelName",
                item.created_at AS "createdAt"
         FROM news_items item
         JOIN channels channel ON channel.id = item.channel_id
+        LEFT JOIN source_pages page ON page.id = item.source_page_id
         WHERE item.period_id = ${period.id} ORDER BY item.created_at DESC
       `,
       sql`
         SELECT item.id, 'comment' AS type, item.content, item.commented_at AS "commentedAt",
+               item.news_item_id AS "newsItemId", linked.title AS "newsTitle",
                item.profile, item.sentiment, item.channel_id AS "channelId",
+               item.sentiment_source AS "sentimentSource",
+               item.sentiment_reason AS "sentimentReason",
+               item.sentiment_keywords AS "sentimentKeywords",
+               item.source_page_id AS "sourcePageId", page.name AS "sourcePageName",
                channel.name AS "channelName", item.created_at AS "createdAt"
         FROM analyzed_comments item
         JOIN channels channel ON channel.id = item.channel_id
+        LEFT JOIN source_pages page ON page.id = item.source_page_id
+        LEFT JOIN news_items linked ON linked.id = item.news_item_id
         WHERE item.period_id = ${period.id} ORDER BY item.created_at DESC
       `,
       sql`
@@ -84,9 +98,11 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
 
     const sql = getScopedDatabase(env, actor.id)
     const [period] = await sql`
-      SELECT id, organization_id AS "organizationId"
-      FROM monitoring_periods
-      WHERE id = ${params.periodId} AND status = 'processing'
+      SELECT period.id, period.organization_id AS "organizationId",
+             organization.name AS "organizationName"
+      FROM monitoring_periods period
+      JOIN organizations organization ON organization.id = period.organization_id
+      WHERE period.id = ${params.periodId} AND period.status = 'processing'
       LIMIT 1
     `
 
@@ -96,14 +112,33 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
     const item = parsed.data
 
     if (item.type === 'news') {
+      const sentimentContext = await getSentimentContext(sql, period.organizationId, period.organizationName)
+      const [classifiedItem] = await classifyMissingSentiments(
+        env.AI,
+        [item],
+        (value) => value.title,
+        sentimentContext,
+      )
       rows = await sql`
         WITH inserted AS (
-          INSERT INTO news_items (organization_id, period_id, channel_id, title, source_url, published_at, sentiment, notes)
-          SELECT ${period.organizationId}, ${period.id}, c.id, ${item.title}, ${item.sourceUrl ?? null}, ${item.publishedAt}, ${item.sentiment}, ${item.notes ?? null}
+          INSERT INTO news_items (
+            organization_id, period_id, channel_id, source_page_id, title, source_url,
+            published_at, sentiment, sentiment_source, sentiment_reason, sentiment_keywords, notes
+          )
+          SELECT ${period.organizationId}, ${period.id}, c.id, page.id,
+                 ${item.title}, ${item.sourceUrl ?? null}, NULL, ${classifiedItem.sentiment},
+                 ${classifiedItem.sentimentSource}, ${classifiedItem.sentimentReason},
+                 ${classifiedItem.sentimentKeywords}, ${item.notes ?? null}
           FROM channels c
+          LEFT JOIN source_pages page
+            ON page.id = ${item.sourcePageId ?? null}
+            AND page.channel_id = c.id
+            AND page.organization_id = ${period.organizationId}
+            AND page.active = true
           WHERE c.id = ${item.channelId}
             AND c.organization_id = ${period.organizationId}
             AND c.active = true
+            AND (${item.sourcePageId ?? null}::uuid IS NULL OR page.id IS NOT NULL)
           RETURNING id
         ),
         audited AS (
@@ -115,14 +150,39 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
         SELECT id FROM audited
       `
     } else if (item.type === 'comment') {
+      const sentimentContext = await getSentimentContext(sql, period.organizationId, period.organizationName)
+      const [classifiedItem] = await classifyMissingSentiments(
+        env.AI,
+        [item],
+        (value) => value.content,
+        sentimentContext,
+      )
       rows = await sql`
         WITH inserted AS (
-          INSERT INTO analyzed_comments (organization_id, period_id, channel_id, content, commented_at, profile, sentiment)
-          SELECT ${period.organizationId}, ${period.id}, c.id, ${item.content}, ${item.commentedAt}, ${item.profile}, ${item.sentiment}
+          INSERT INTO analyzed_comments (
+            organization_id, period_id, channel_id, source_page_id, news_item_id, content,
+            commented_at, profile, sentiment, sentiment_source, sentiment_reason, sentiment_keywords
+          )
+          SELECT ${period.organizationId}, ${period.id}, c.id, page.id, linked.id,
+                 ${item.content}, NULL, ${item.profile}, ${classifiedItem.sentiment},
+                 ${classifiedItem.sentimentSource}, ${classifiedItem.sentimentReason},
+                 ${classifiedItem.sentimentKeywords}
           FROM channels c
+          LEFT JOIN source_pages page
+            ON page.id = ${item.sourcePageId ?? null}
+            AND page.channel_id = c.id
+            AND page.organization_id = ${period.organizationId}
+            AND page.active = true
+          LEFT JOIN news_items linked
+            ON linked.id = ${item.newsItemId ?? null}
+            AND linked.organization_id = ${period.organizationId}
+            AND linked.period_id = ${period.id}
+            AND linked.channel_id = c.id
           WHERE c.id = ${item.channelId}
             AND c.organization_id = ${period.organizationId}
             AND c.active = true
+            AND (${item.sourcePageId ?? null}::uuid IS NULL OR page.id IS NOT NULL)
+            AND (${item.newsItemId ?? null}::uuid IS NULL OR linked.id IS NOT NULL)
           RETURNING id
         ),
         audited AS (
@@ -150,7 +210,7 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
       `
     }
 
-    if (rows.length === 0) return json({ error: 'Canal não encontrado nesta organização.' }, 400)
+    if (rows.length === 0) return json({ error: 'Canal, página ou notícia relacionada não pertence a esta organização e período.' }, 400)
     return json({ saved: true }, 201)
   } catch (error) {
     return apiError(error)

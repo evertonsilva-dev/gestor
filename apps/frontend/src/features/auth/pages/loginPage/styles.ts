@@ -18,8 +18,8 @@ export const Welcome = styled.section`
   padding: clamp(30px, 6vw, 76px);
   color: #fff;
   background:
-    radial-gradient(ellipse at 70% 45%, rgba(232, 185, 20, 0.12), transparent 40%),
-    linear-gradient(135deg, #101722, #141f2d);
+    radial-gradient(ellipse at 70% 45%, rgba(242, 176, 111, 0.2), transparent 40%),
+    linear-gradient(135deg, #3a1c30, #522842);
 
   @media (max-width: 760px) { display: none; }
 `
@@ -27,10 +27,20 @@ export const Welcome = styled.section`
 export const Logo = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: ${({ theme }) => theme.colors.gold};
-  font-weight: 800;
-  letter-spacing: 0.2em;
+  color: #fff;
+  width: min(100%, 280px);
+
+  img { display: block; width: 100%; height: auto; object-fit: contain; }
+`
+
+export const FormBrand = styled.img`
+  display: none;
+  width: min(100%, 240px);
+  height: auto;
+  margin: 0 auto 2px;
+  object-fit: contain;
+
+  @media (max-width: 760px) { display: block; }
 `
 
 export const WelcomeCopy = styled.div`

@@ -84,6 +84,15 @@ export const DateRangeControl = styled.div`
   .rc-picker-active-bar {
     display: none;
   }
+
+  @media (max-width: 440px) {
+    .rc-picker-range {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .rc-picker-range-separator { display: none; }
+  }
 `
 
 export const DatePickerPopupStyles = createGlobalStyle`

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Activity, ArrowRight, KeyRound } from 'lucide-react'
+import { ArrowRight, KeyRound } from 'lucide-react'
 import { Button } from '@/components/button'
 import { FormField } from '@/components/formField'
 import { Notice } from '@/components/notice'
@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import {
   Footnote,
   Form,
+  FormBrand,
   LoginModeLink,
   Logo,
   Page,
@@ -38,7 +39,7 @@ export function ClientLoginPage() {
   return (
     <Page>
       <Welcome>
-        <Logo><Activity size={26} /> GESTOR</Logo>
+        <Logo><img src="/branding/arquea-horizontal-branco.svg" alt="Arquea Tecnologia" /></Logo>
         <WelcomeCopy>
           <h1>Inteligência para <span>decidir melhor.</span></h1>
           <p>Dados organizados, contexto e recomendações para acompanhar a comunicação com clareza.</p>
@@ -47,6 +48,7 @@ export function ClientLoginPage() {
       </Welcome>
       <Panel>
         <Form onSubmit={(event) => void handleSubmit(event)}>
+          <FormBrand src="/branding/arquea-horizontal-cor.svg" alt="Arquea Tecnologia" />
           <KeyRound size={22} />
           <h2>Acesso do cliente</h2>
           <p>Informe a chave de acesso recebida do administrador da plataforma.</p>

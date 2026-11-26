@@ -53,6 +53,7 @@ export const mockDashboardData: DashboardData = {
       profile: 'simpatizante',
       sentiment: 'positive',
       commentedAt: '2026-10-23T16:00:00.000Z',
+      newsTitle: null,
     },
     {
       id: 'mock-comment-002',
@@ -61,6 +62,7 @@ export const mockDashboardData: DashboardData = {
       profile: 'detrator',
       sentiment: 'negative',
       commentedAt: '2026-10-26T10:15:00.000Z',
+      newsTitle: null,
     },
   ],
   recommendations: [

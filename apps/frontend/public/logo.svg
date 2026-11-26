@@ -1,6 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#101722"/>
-  <path d="M12 38h9l5-13 9 25 6-16 4 8h7" fill="none" stroke="#e8b914" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
-  <circle cx="12" cy="38" r="3" fill="#62a9cf"/>
-  <circle cx="52" cy="42" r="3" fill="#f36d60"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="arquea" x1="8" y1="8" x2="58" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3A1C30"/>
+      <stop offset=".55" stop-color="#D28C6E"/>
+      <stop offset="1" stop-color="#F2B06F"/>
+    </linearGradient>
+  </defs>
+  <path d="M8 52 27 12l18 40M17 34h21" stroke="url(#arquea)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 31c0-12 17-15 22-4 5 12-6 26-18 20-7-3-9-10-7-16 2-7 12-10 18-5 5 4 4 12-1 15-5 3-11 0-11-6" stroke="url(#arquea)" stroke-width="3.5" stroke-linecap="round"/>
 </svg>

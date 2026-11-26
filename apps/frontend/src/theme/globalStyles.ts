@@ -6,7 +6,7 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   :root {
-    font-family: Inter, "Segoe UI", sans-serif;
+    font-family: Geometria, "Avenir Next", Inter, "Segoe UI", sans-serif;
     color: ${({ theme }) => theme.colors.ink};
     background: ${({ theme }) => theme.colors.background};
     font-synthesis: none;
@@ -19,6 +19,19 @@ export const GlobalStyles = createGlobalStyle`
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
+  }
+
+  #root {
+    min-width: 0;
+    min-height: 100vh;
+  }
+
+  img, svg {
+    max-width: 100%;
+  }
+
+  h1, h2, h3, p {
+    overflow-wrap: anywhere;
   }
 
   button, input, select, textarea {

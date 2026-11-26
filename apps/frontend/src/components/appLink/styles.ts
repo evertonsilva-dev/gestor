@@ -5,10 +5,14 @@ const linkStyles = css`
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
   color: ${({ theme }) => theme.colors.blue};
   font-size: 0.9rem;
   font-weight: 650;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
   text-decoration: none;
   text-underline-offset: 3px;
   transition: color 160ms ease, text-decoration-color 160ms ease;

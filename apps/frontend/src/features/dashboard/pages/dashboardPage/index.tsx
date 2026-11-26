@@ -1,15 +1,12 @@
-import { useState } from 'react'
 import { LoadingScreen } from '@/components/loadingScreen'
 import { Notice } from '@/components/notice'
-import { useAuth } from '@/hooks/useAuth'
-import { useDashboard } from '@/hooks/useDashboard'
 import { DashboardReport } from '../../components/dashboardReport'
+import { useDashboardPage } from './useDashboardPage'
 import { ErrorPanel } from './styles'
 
 export function DashboardPage() {
-  const { profile } = useAuth()
-  const [periodId, setPeriodId] = useState('')
-  const { data, isLoading, error, refresh } = useDashboard(null, periodId || null, true)
+  const page = useDashboardPage()
+  const { data, isLoading, error, refresh } = page.dashboardState
 
   if (isLoading) return <LoadingScreen label="Carregando relatório" />
   if (error) {
@@ -20,13 +17,13 @@ export function DashboardPage() {
       </ErrorPanel>
     )
   }
-  if (!data || !profile) return <Notice tone="error">Não foi possível carregar o ambiente desta organização.</Notice>
+  if (!data || !page.profile) return <Notice tone="error">Não foi possível carregar o ambiente desta organização.</Notice>
 
   return (
     <DashboardReport
       data={data}
-      selectedPeriodId={periodId || data.selectedPeriod?.id || ''}
-      onPeriodChange={setPeriodId}
+      selectedPeriodId={page.periodId || data.selectedPeriod?.id || ''}
+      onPeriodChange={page.setPeriodId}
     />
   )
 }

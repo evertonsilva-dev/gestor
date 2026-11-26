@@ -6,6 +6,8 @@ import type { SelectOption } from './types'
 export const Field = styled.div`
   display: grid;
   gap: 7px;
+  min-width: 0;
+  max-width: 100%;
   color: ${({ theme }) => theme.colors.ink};
   font-size: 0.86rem;
   font-weight: 650;
@@ -13,6 +15,7 @@ export const Field = styled.div`
   > input:not([type='hidden']),
   > textarea {
     width: 100%;
+    min-width: 0;
     min-height: 44px;
     padding: 10px 12px;
     border: 1px solid ${({ theme }) => theme.colors.border};
@@ -46,6 +49,8 @@ export function createSelectStyles(theme: DefaultTheme): StylesConfig<SelectOpti
   return {
     control: (base, state) => ({
       ...base,
+      minWidth: 0,
+      maxWidth: '100%',
       minHeight: 42,
       borderColor: state.isFocused ? theme.colors.navy : theme.colors.border,
       borderRadius: theme.radius.small,
@@ -54,9 +59,16 @@ export function createSelectStyles(theme: DefaultTheme): StylesConfig<SelectOpti
       transition: 'border-color 160ms ease, box-shadow 160ms ease',
       '&:hover': { borderColor: theme.colors.inkSoft },
     }),
-    valueContainer: (base) => ({ ...base, padding: '2px 11px' }),
-    input: (base) => ({ ...base, color: theme.colors.ink }),
-    singleValue: (base) => ({ ...base, color: theme.colors.ink }),
+    valueContainer: (base) => ({ ...base, minWidth: 0, padding: '2px 11px' }),
+    input: (base) => ({ ...base, minWidth: 0, color: theme.colors.ink }),
+    singleValue: (base) => ({
+      ...base,
+      maxWidth: 'calc(100% - 8px)',
+      overflow: 'hidden',
+      color: theme.colors.ink,
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
     placeholder: (base) => ({ ...base, color: theme.colors.inkSoft }),
     indicatorsContainer: (base) => ({ ...base, color: theme.colors.inkSoft }),
     indicatorSeparator: () => ({ display: 'none' }),

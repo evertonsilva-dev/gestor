@@ -3,6 +3,7 @@ import type { NoticeTone } from './types'
 
 export const Box = styled.div<{ $tone: NoticeTone }>`
   padding: 13px 15px;
+  min-width: 0;
   border: 1px solid ${({ theme, $tone }) => $tone === 'error'
     ? theme.colors.red
     : $tone === 'success'
@@ -20,4 +21,6 @@ export const Box = styled.div<{ $tone: NoticeTone }>`
       ? theme.colors.greenSoft
       : theme.colors.blueSoft};
   font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 `

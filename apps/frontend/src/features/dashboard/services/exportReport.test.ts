@@ -31,6 +31,7 @@ const reportData: DashboardData = {
     profile: 'militante',
     sentiment: 'positive',
     commentedAt: '2026-01-11',
+    newsTitle: 'Título relacionado',
   }],
   recommendations: [{ id: 'recommendation-1', category: 'action', content: 'Ação recomendada' }],
   availablePeriods: [],
@@ -74,7 +75,9 @@ describe('downloadExcelReport', () => {
     expect(sentiments).toContain('Total')
     expect(strFromU8(files['xl/worksheets/sheet5.xml'])).toContain('https://example.com/noticia')
     expect(comments).toContain('Comentário analisado')
-    expect(comments).toContain('Positivo')
+    expect(comments).toContain('Favorável')
+    expect(comments).toContain('Título relacionado')
+    expect(comments).not.toContain('2026-01-11')
     expect(strFromU8(files['xl/worksheets/sheet7.xml'])).toContain('Ação recomendada')
   })
 

@@ -12,8 +12,12 @@ export const StyledButton = styled.button<{
   border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.radius.medium};
   font-weight: 650;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.25;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
   transition:
     background 160ms ease,
     border-color 160ms ease,

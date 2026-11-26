@@ -60,7 +60,7 @@ export interface DashboardData {
     sourceUrl: string | null
     channelName: string
     sentiment: 'positive' | 'neutral' | 'negative'
-    publishedAt: string
+    publishedAt: string | null
   }>
   comments: Array<{
     id: string
@@ -68,7 +68,8 @@ export interface DashboardData {
     channelName: string
     profile: 'militante' | 'simpatizante' | 'detrator'
     sentiment: 'positive' | 'neutral' | 'negative'
-    commentedAt: string
+    commentedAt: string | null
+    newsTitle: string | null
   }>
   recommendations: Array<{
     id: string

@@ -1,6 +1,6 @@
-# Gestor | Monitoramento
+# Arquea Tecnologia | Monitoramento
 
-Plataforma multicliente para organizar a alimentação manual diária dos dados de comunicação e publicar relatórios isolados por organização.
+Plataforma multicliente da Arquea Tecnologia para organizar os dados de comunicação e publicar relatórios isolados por organização.
 
 ## Arquitetura
 
@@ -18,6 +18,7 @@ Plataforma multicliente para organizar a alimentação manual diária dos dados 
 - Hooks ficam em `apps/frontend/src/hooks/<hook>/`, com `index.ts[x]` e arquivos auxiliares quando necessários.
 - Componentes usam PascalCase (por exemplo, `AppShell`); pastas e arquivos seguem camelCase (por exemplo, `appShell` e `globalStyles.ts`).
 - O `package.json` e o `package-lock.json` na raiz gerenciam os workspaces npm.
+- A identidade da interface usa a paleta Arquea; o `logo.svg` atual é uma versão vetorial provisória baseada na referência visual e deve ser substituído pelo arquivo oficial quando disponibilizado.
 
 ## Desenvolvimento local
 
@@ -30,7 +31,7 @@ Requer Node.js 22.22.2 ou superior e npm.
 5. Para trabalhar apenas na interface, inicie o front-end com `npm run dev`.
 6. Para exercitar a aplicação completa, inicie `npm run dev`. O plugin do Cloudflare executa a SPA e o Worker juntos no runtime local e lê os valores de `.dev.vars`.
 
-Neon Auth está habilitado na branch `dev`, separado de `main`. Configure os domínios de confiança necessários no Neon Auth; crie um usuário nessa branch e vincule seu ID a `app_users` antes do primeiro login. Desative o cadastro público se a operação for somente por convite.
+Neon Auth está habilitado nas branches `dev` e `main`, com estado de autenticação separado. Em **Domains** no Neon Auth, cadastre `https://develop-gestor.evertonsilvadev.workers.dev` na branch `dev` e `https://gestor.evertonsilvadev.workers.dev` na branch `main`. Use somente a origem, sem caminho como `/login` ou barra final; cada ambiente deve apontar para o Neon Auth da própria branch. Na branch `dev`, crie um usuário e vincule seu ID a `app_users` antes do primeiro login. Desative o cadastro público se a operação for somente por convite.
 
 O login administrativo usa e-mail e senha do Neon Auth; **Esqueceu a senha?** envia um link de recuperação. Os links expiram após uma hora. Clientes acessam `/client-login` com a chave emitida pela administradora.
 
@@ -43,11 +44,13 @@ INSERT INTO app_users (auth_user_id, email, display_name, role)
 VALUES ('<NEON_AUTH_USER_ID>', '<EMAIL_ADMIN>', '<NOME_ADMIN>', 'admin');
 ```
 
-O índice `one_global_admin` impede a criação de um segundo perfil administrativo. Depois, a administradora cria organizações e gera uma chave para cada cliente pela tela **Organizações**. A chave completa é mostrada somente na criação; deve ser copiada e compartilhada com o cliente. A lista administrativa exibe apenas o prefixo, e a revogação encerra também as sessões existentes.
+Administradores são perfis globais, sem vínculo com uma organização, e podem existir em conjunto após a migration `apps/api/migrations/0004_multiple_admins.sql`. Cada um precisa ter um usuário no Neon Auth da branch correspondente e um perfil ativo em `app_users`; o SQL acima mostra como associar o primeiro. Depois, a administradora cria organizações e gera uma chave para cada cliente pela tela **Organizações**. A chave completa é mostrada somente na criação; deve ser copiada e compartilhada com o cliente. A lista administrativa exibe apenas o prefixo, e a revogação encerra também as sessões existentes.
 
 A migration `apps/api/migrations/0002_client_access_keys.sql` cria as tabelas e políticas RLS necessárias para chaves e sessões de clientes e já foi aplicada na branch Neon `dev`. Aplique-a uma única vez em cada ambiente novo antes de usar o fluxo.
 
 A migration `apps/api/migrations/0003_client_key_prefixes.sql` normaliza os prefixos exibidos para as chaves já existentes e também foi aplicada em `dev`. Chaves já emitidas continuam válidas; clientes precisarão entrar novamente para receber o cookie de sessão com o novo nome.
+
+A migration `apps/api/migrations/0006_contextual_source_pages.sql` adiciona páginas por canal, análise contextual de sentimento e revisão administrativa de afinidade por período. Ela foi criada, mas ainda não aplicada; aplique-a em cada ambiente antes de publicar a versão que usa essas tabelas e colunas.
 
 ## Build e verificações
 
@@ -62,7 +65,7 @@ npm test
 
 O projeto Worker fica em `apps/frontend` e é configurado por `cloudflare.config.ts`. A SPA é publicada como Workers Static Assets e `/api/*` é encaminhado ao Worker. `npm run build` valida o Worker; `npm run deploy:worker` publica somente o Worker com o `cf` CLI.
 
-Defina `VITE_NEON_AUTH_URL` como variável pública de build. Configure `DATABASE_URL` (preferencialmente a URL pooled do Neon) e `NEON_AUTH_JWKS_URL` como secrets do Worker. Não comite valores reais.
+Defina `VITE_NEON_AUTH_URL` como variável pública de build. Configure `DATABASE_URL` (preferencialmente a URL pooled do Neon) e `NEON_AUTH_JWKS_URL` como secrets do Worker. O binding `AI` do Workers AI é declarado em `cloudflare.config.ts`; não exige chave de API. A classificação envia títulos de notícias ou conteúdo de comentários junto ao nome da organização e seus assuntos/palavras-chave ativos; URLs, anotações e dados pessoais não são enviados. A análise e sua justificativa ficam disponíveis apenas na administração. Não comite valores reais.
 
 No primeiro deploy, crie na raiz `.env.worker.production.local` com `DATABASE_URL` e `NEON_AUTH_JWKS_URL` de produção e envie o arquivo com `npm run deploy:worker -- --secrets-file ../../.env.worker.production.local`. O arquivo é ignorado pelo Git; não use os valores de desenvolvimento de `.dev.vars`. Após o primeiro deploy, ele pode ser removido: secrets não reenviados são preservados pelo Worker nas versões seguintes. Defina também `VITE_NEON_AUTH_URL` de produção no ambiente de build ou em `.env.production.local`.
 
@@ -72,11 +75,13 @@ Cada push em `develop` publica um Preview isolado do Worker `gestor`; não cria 
 
 ## Fluxo diário
 
-1. A administradora cria a organização, seus canais/assuntos e um período de monitoramento.
-2. A administradora cadastra notícias, comentários e recomendações enquanto o período está em processamento.
-3. Ao concluir e revisar a alimentação, publica o período.
-4. Clientes consultam apenas períodos publicados da própria organização e exportam PDF/Excel. Um período em processamento não substitui o último publicado.
+1. A administradora cria a organização, seus assuntos monitorados e palavras-chave, canais, páginas/fontes por canal e um período de monitoramento. O cadastro e a associação das páginas são manuais; não há scraping de redes sociais.
+2. Enquanto o período está em processamento, a administradora pode associar páginas aos itens cadastrados individualmente ou importados em lote. Sentimentos informados são preservados; campos vazios são classificados pelo Workers AI com contexto da organização, e o resultado, justificativa e palavras-chave identificadas podem ser revisados e corrigidos manualmente.
+3. O intervalo definido para o período é a referência de datas apresentada no relatório; notícias e comentários não exigem data individual.
+4. Para páginas com pelo menos três notícias associadas no período, a administração revisa a sugestão de afinidade (aliada, neutra ou crítica) com base na distribuição de sentimentos. Empates são sugeridos como neutros; a administração confirma ou corrige a sugestão.
+5. Ao concluir e revisar a alimentação, publica o período. Administradores podem corrigir conteúdo publicado, com registro de auditoria.
+6. Clientes consultam apenas períodos publicados da própria organização e exportam PDF/Excel; justificativas da IA e revisões de afinidade continuam restritas à administração. Um período em processamento não substitui o último publicado.
 
 ## Limites atuais
 
-Captura automatizada e classificação por IA não fazem parte da primeira entrega. Fórmulas finais dos indicadores e conteúdo de exemplo devem ser validados com um relatório real antes de serem tratados como regras de negócio.
+Busca automatizada por palavras-chave e captura de redes sociais permanecem fora da entrega operacional inicial; integrações com GDELT ou RSS devem ser avaliadas em fases posteriores e validadas com dados reais.

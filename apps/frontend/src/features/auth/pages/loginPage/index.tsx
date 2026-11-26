@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import { Activity, ArrowRight, LockKeyhole } from 'lucide-react'
+import { ArrowRight, LockKeyhole } from 'lucide-react'
 import { Button } from '@/components/button'
 import { FormField } from '@/components/formField'
 import { Notice } from '@/components/notice'
 import { useAuth } from '@/hooks/useAuth'
 import { LoginModeLink, RecoveryLink } from './styles'
 import type { LoginPageProps } from './types'
-import { Footnote, Form, Logo, Page, Panel, Welcome, WelcomeCopy } from './styles'
+import { Footnote, Form, FormBrand, Logo, Page, Panel, Welcome, WelcomeCopy } from './styles'
 
 export function LoginPage({ initialError }: LoginPageProps) {
   const { signIn, authError } = useAuth()
@@ -31,7 +31,7 @@ export function LoginPage({ initialError }: LoginPageProps) {
   return (
     <Page>
       <Welcome>
-        <Logo><Activity size={26} /> GESTOR</Logo>
+        <Logo><img src="/branding/arquea-horizontal-branco.svg" alt="Arquea Tecnologia" /></Logo>
         <WelcomeCopy>
           <h1>Inteligência para <span>decidir melhor.</span></h1>
           <p>Dados organizados, contexto e recomendações para acompanhar a comunicação com clareza.</p>
@@ -40,6 +40,7 @@ export function LoginPage({ initialError }: LoginPageProps) {
       </Welcome>
       <Panel>
         <Form onSubmit={(event) => void handleSubmit(event)}>
+          <FormBrand src="/branding/arquea-horizontal-cor.svg" alt="Arquea Tecnologia" />
           <LockKeyhole size={22} />
           <h2>Acesse sua conta</h2>
           <p>Entre para consultar o ambiente da sua organização.</p>

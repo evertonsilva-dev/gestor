@@ -1,25 +1,16 @@
-import { useEffect, useState } from 'react'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, Building2, Radio } from 'lucide-react'
 import { Card } from '@/components/card'
 import { FormField } from '@/components/formField'
 import { LoadingScreen } from '@/components/loadingScreen'
 import { Notice } from '@/components/notice'
-import { useDashboard } from '@/hooks/useDashboard'
-import { useOrganizations } from '@/hooks/useOrganizations'
 import { DashboardReport } from '@/features/dashboard/components/dashboardReport'
-import { ActionLink, Links, Stack } from './styles'
+import { useAdminOverviewPage } from './useAdminOverviewPage'
+import { ActionCopy, ActionIcon, ActionLink, Links, Stack } from './styles'
 
 export function AdminOverviewPage() {
-  const { organizations, isLoading: organizationsLoading, error: organizationsError } = useOrganizations()
-  const [organizationId, setOrganizationId] = useState('')
-  const [periodId, setPeriodId] = useState('')
-  const { data, isLoading, error } = useDashboard(organizationId || null, periodId || null)
-
-  useEffect(() => {
-    if (!organizationId && organizations.length > 0) {
-      setOrganizationId(organizations.find((organization) => organization.active)?.id ?? '')
-    }
-  }, [organizationId, organizations])
+  const page = useAdminOverviewPage()
+  const { organizations, isLoading: organizationsLoading, error: organizationsError } = page.organizationsState
+  const { data, isLoading, error } = page.dashboardState
 
   if (organizationsLoading) return <LoadingScreen label="Carregando organizações" />
   if (organizationsError) return <Notice tone="error">{organizationsError}</Notice>
@@ -29,10 +20,20 @@ export function AdminOverviewPage() {
       <Card title="Visão geral" subtitle="Acompanhe os relatórios publicados e acesse as rotinas de gestão.">
         <Links>
           <ActionLink to="/admin/organizations">
-            Gerenciar organizações e acessos <ArrowUpRight size={17} />
+            <ActionIcon $tone="gold"><Building2 size={18} /></ActionIcon>
+            <ActionCopy>
+              <strong>Organizações e acessos</strong>
+              <small>Gerencie ambientes, chaves e contexto da IA</small>
+            </ActionCopy>
+            <ArrowUpRight size={17} />
           </ActionLink>
           <ActionLink to="/admin/monitoring">
-            Cadastrar monitoramento diário <ArrowUpRight size={17} />
+            <ActionIcon $tone="blue"><Radio size={18} /></ActionIcon>
+            <ActionCopy>
+              <strong>Monitoramento</strong>
+              <small>Configure canais, páginas e períodos</small>
+            </ActionCopy>
+            <ArrowUpRight size={17} />
           </ActionLink>
         </Links>
       </Card>
@@ -44,11 +45,8 @@ export function AdminOverviewPage() {
             <FormField
               as="select"
               label="Organização"
-              value={organizationId}
-              onChange={(value) => {
-                setOrganizationId(value)
-                setPeriodId('')
-              }}
+              value={page.organizationId}
+              onChange={page.selectOrganization}
               options={organizations.filter((organization) => organization.active).map((organization) => ({
                 value: organization.id,
                 label: organization.name,
@@ -60,8 +58,8 @@ export function AdminOverviewPage() {
           {data && (
             <DashboardReport
               data={data}
-              selectedPeriodId={periodId || data.selectedPeriod?.id || ''}
-              onPeriodChange={setPeriodId}
+              selectedPeriodId={page.periodId || data.selectedPeriod?.id || ''}
+              onPeriodChange={page.setPeriodId}
             />
           )}
         </>

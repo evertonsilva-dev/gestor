@@ -1,6 +1,7 @@
 import { errors as joseErrors } from 'jose'
 
 export class ConfigurationError extends Error {}
+export class ServiceUnavailableError extends Error {}
 
 export function json(data: unknown, status = 200, headers: HeadersInit = {}): Response {
   const responseHeaders = new Headers(headers)
@@ -15,7 +16,7 @@ export function json(data: unknown, status = 200, headers: HeadersInit = {}): Re
 export function apiError(error: unknown): Response {
   console.error('API request failed', error)
 
-  if (error instanceof ConfigurationError) {
+  if (error instanceof ConfigurationError || error instanceof ServiceUnavailableError) {
     return json({ error: error.message }, 503)
   }
 

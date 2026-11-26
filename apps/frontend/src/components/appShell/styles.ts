@@ -9,11 +9,11 @@ export const Frame = styled.div`
 
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
 `
 
-export const Sidebar = styled.aside`
+export const Sidebar = styled.aside<{ $isOpen: boolean }>`
   position: sticky;
   top: 0;
   align-self: start;
@@ -26,28 +26,65 @@ export const Sidebar = styled.aside`
   padding: 24px 16px;
   color: #f7f8fa;
   background: ${({ theme }) => theme.colors.navy};
-  border-right: 1px solid #273447;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
 
   @media (max-width: 860px) {
-    z-index: 1;
-    height: auto;
-    min-height: auto;
-    gap: 16px;
-    padding: 14px 16px;
+    position: fixed;
+    z-index: 21;
+    inset: 0 auto 0 0;
+    width: min(300px, calc(100vw - 48px));
+    height: 100vh;
+    height: 100dvh;
+    gap: 24px;
+    padding: 18px 16px;
     border-right: 0;
-    border-bottom: 1px solid #273447;
+    box-shadow: ${({ $isOpen }) => $isOpen ? '16px 0 40px rgba(0, 0, 0, 0.24)' : 'none'};
+    transform: translateX(${({ $isOpen }) => $isOpen ? '0' : '-105%'});
+    visibility: ${({ $isOpen }) => $isOpen ? 'visible' : 'hidden'};
+    transition: transform 200ms ease, visibility 200ms ease;
   }
+`
+
+export const Overlay = styled.button`
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(8, 13, 21, 0.58);
+  cursor: pointer;
+`
+
+export const DrawerHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 `
 
 export const Brand = styled.div`
   display: flex;
   align-items: center;
-  gap: 11px;
   padding: 4px 8px;
 
-  svg { color: ${({ theme }) => theme.colors.gold}; }
-  strong { display: block; letter-spacing: 0.16em; font-size: 0.95rem; }
-  span { display: block; margin-top: 3px; color: #aab4c2; font-size: 0.65rem; letter-spacing: 0.14em; }
+  img { display: block; width: min(100%, 204px); height: auto; object-fit: contain; }
+`
+
+export const CloseMenuButton = styled.button`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: ${({ theme }) => theme.radius.small};
+  color: #fff;
+  background: transparent;
+
+  @media (max-width: 860px) { display: inline-flex; }
 `
 
 export const Navigation = styled.nav`
@@ -72,8 +109,8 @@ export const Navigation = styled.nav`
     }
     &.active {
       color: #fff;
-      background: linear-gradient(100deg, rgba(232, 185, 20, 0.16), rgba(27, 38, 53, 0.92) 78%);
-      border-color: rgba(232, 185, 20, 0.18);
+      background: linear-gradient(100deg, rgba(242, 176, 111, 0.18), rgba(82, 40, 66, 0.92) 78%);
+      border-color: rgba(242, 176, 111, 0.24);
       box-shadow: inset 3px 0 ${({ theme }) => theme.colors.gold};
     }
     &:focus-visible {
@@ -83,10 +120,8 @@ export const Navigation = styled.nav`
   }
 
   @media (max-width: 860px) {
-    display: flex;
-    overflow-x: auto;
-
-    a { flex-shrink: 0; }
+    display: grid;
+    overflow: visible;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -99,9 +134,8 @@ export const Account = styled.div`
   gap: 12px;
   margin-top: auto;
   padding: 14px 9px 0;
-  border-top: 1px solid #2e3b4c;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 
-  @media (max-width: 860px) { display: none; }
 `
 
 export const AccountName = styled.div`
@@ -120,17 +154,44 @@ export const Main = styled.main`
   padding: clamp(18px, 3vw, 40px);
 
   @media (max-width: 860px) {
-    height: auto;
+    height: 100%;
+    padding: 18px 16px 28px;
   }
 `
 
 export const Header = styled.header`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 16px;
   margin-bottom: 28px;
 
-  h1 { margin: 0; font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -0.035em; }
-  p { margin: 6px 0 0; color: ${({ theme }) => theme.colors.inkSoft}; font-size: 0.9rem; }
+  > div { min-width: 0; }
+  h1 { margin: 0; font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -0.035em; overflow-wrap: anywhere; }
+  p { margin: 6px 0 0; color: ${({ theme }) => theme.colors.inkSoft}; font-size: 0.9rem; line-height: 1.5; overflow-wrap: anywhere; }
+
+  @media (max-width: 860px) {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+`
+
+export const MenuButton = styled.button`
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-top: 1px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.small};
+  color: ${({ theme }) => theme.colors.ink};
+  background: ${({ theme }) => theme.colors.surface};
+
+  &:focus-visible {
+    outline: 3px solid ${({ theme }) => theme.colors.blue};
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 860px) { display: inline-flex; }
 `

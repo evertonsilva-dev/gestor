@@ -116,7 +116,7 @@ export const onRequestGet: PagesFunction<Environment> = async ({ request, env })
         FROM news_items n
         JOIN channels c ON c.id = n.channel_id
         WHERE n.period_id = ${selectedPeriod.id}
-        ORDER BY n.published_at DESC
+        ORDER BY n.published_at DESC NULLS LAST, n.created_at DESC
       `,
       sql`
         SELECT
@@ -125,11 +125,13 @@ export const onRequestGet: PagesFunction<Environment> = async ({ request, env })
           c.name AS "channelName",
           cmt.profile,
           cmt.sentiment,
-          cmt.commented_at AS "commentedAt"
+          cmt.commented_at AS "commentedAt",
+          linked.title AS "newsTitle"
         FROM analyzed_comments cmt
         JOIN channels c ON c.id = cmt.channel_id
+        LEFT JOIN news_items linked ON linked.id = cmt.news_item_id
         WHERE cmt.period_id = ${selectedPeriod.id}
-        ORDER BY cmt.commented_at DESC
+        ORDER BY cmt.commented_at DESC NULLS LAST, cmt.created_at DESC
       `,
       sql`
         SELECT id, category, content

@@ -6,7 +6,7 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   envDir: fileURLToPath(new URL('../..', import.meta.url)),
-  plugins: [react(), cloudflare()],
+  plugins: [react(), cloudflare({ remoteBindings: true })],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

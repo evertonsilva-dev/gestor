@@ -5,7 +5,7 @@ import { Button } from '@/components/button'
 import { FormField } from '@/components/formField'
 import { Notice } from '@/components/notice'
 import { requestPasswordReset, resetPassword } from '@/features/auth/services/authClient'
-import { Footnote, Form, Logo, Page, Panel, RecoveryLink, Welcome, WelcomeCopy } from '../loginPage/styles'
+import { Footnote, Form, FormBrand, Logo, Page, Panel, RecoveryLink, Welcome, WelcomeCopy } from '../loginPage/styles'
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -49,7 +49,7 @@ export function ResetPasswordPage() {
   return (
     <Page>
       <Welcome>
-        <Logo><KeyRound size={26} /> GESTOR</Logo>
+        <Logo><img src="/branding/arquea-horizontal-branco.svg" alt="Arquea Tecnologia" /></Logo>
         <WelcomeCopy>
           <h1>Recupere o <span>acesso.</span></h1>
           <p>Enviaremos um link seguro para redefinir a senha da sua conta.</p>
@@ -58,6 +58,7 @@ export function ResetPasswordPage() {
       </Welcome>
       <Panel>
         <Form onSubmit={(event) => void handleSubmit(event)}>
+          <FormBrand src="/branding/arquea-horizontal-cor.svg" alt="Arquea Tecnologia" />
           <KeyRound size={22} />
           <h2>{token ? 'Defina uma nova senha' : 'Recuperar senha'}</h2>
           <p>

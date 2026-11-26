@@ -9,6 +9,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: bindings.secret(),
       NEON_AUTH_JWKS_URL: bindings.secret(),
+      AI: bindings.ai({ dev: { remote: true } }),
       ASSETS: bindings.assets(),
     },
     assets: {

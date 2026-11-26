@@ -14,21 +14,33 @@ export interface NewsPeriodItem extends PeriodItemBase {
   type: 'news'
   title: string
   sourceUrl: string | null
-  publishedAt: string
+  publishedAt: string | null
   sentiment: Sentiment
+  sentimentSource: 'ai' | 'manual'
+  sentimentReason: string | null
+  sentimentKeywords: string[]
   notes: string | null
   channelId: string
   channelName: string
+  sourcePageId: string | null
+  sourcePageName: string | null
 }
 
 export interface CommentPeriodItem extends PeriodItemBase {
   type: 'comment'
   content: string
-  commentedAt: string
+  commentedAt: string | null
+  newsItemId: string | null
+  newsTitle: string | null
   profile: AudienceProfile
   sentiment: Sentiment
+  sentimentSource: 'ai' | 'manual'
+  sentimentReason: string | null
+  sentimentKeywords: string[]
   channelId: string
   channelName: string
+  sourcePageId: string | null
+  sourcePageName: string | null
 }
 
 export interface RecommendationPeriodItem extends PeriodItemBase {
@@ -40,8 +52,8 @@ export interface RecommendationPeriodItem extends PeriodItemBase {
 export type PeriodItem = NewsPeriodItem | CommentPeriodItem | RecommendationPeriodItem
 
 export type PeriodItemUpdate =
-  | Partial<Pick<NewsPeriodItem, 'title' | 'sourceUrl' | 'publishedAt' | 'sentiment' | 'notes'>>
-  | Partial<Pick<CommentPeriodItem, 'content' | 'commentedAt' | 'profile' | 'sentiment'>>
+  | Partial<Pick<NewsPeriodItem, 'title' | 'sourceUrl' | 'sourcePageId' | 'sentiment' | 'notes'>>
+  | Partial<Pick<CommentPeriodItem, 'content' | 'sourcePageId' | 'newsItemId' | 'profile' | 'sentiment'>>
   | Partial<Pick<RecommendationPeriodItem, 'category' | 'content'>>
 
 interface PeriodItemsResponse {
