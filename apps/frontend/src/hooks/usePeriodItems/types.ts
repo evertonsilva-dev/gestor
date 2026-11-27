@@ -32,7 +32,7 @@ export interface CommentPeriodItem extends PeriodItemBase {
   commentedAt: string | null
   newsItemId: string | null
   newsTitle: string | null
-  profile: AudienceProfile
+  profile: AudienceProfile | null
   sentiment: Sentiment
   sentimentSource: 'ai' | 'manual'
   sentimentReason: string | null
@@ -53,7 +53,7 @@ export type PeriodItem = NewsPeriodItem | CommentPeriodItem | RecommendationPeri
 
 export type PeriodItemUpdate =
   | Partial<Pick<NewsPeriodItem, 'title' | 'sourceUrl' | 'sourcePageId' | 'sentiment' | 'notes'>>
-  | Partial<Pick<CommentPeriodItem, 'content' | 'sourcePageId' | 'newsItemId' | 'profile' | 'sentiment'>>
+  | Partial<Pick<CommentPeriodItem, 'content' | 'newsItemId' | 'sentiment'>>
   | Partial<Pick<RecommendationPeriodItem, 'category' | 'content'>>
 
 interface PeriodItemsResponse {

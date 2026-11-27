@@ -50,7 +50,9 @@ A migration `apps/api/migrations/0002_client_access_keys.sql` cria as tabelas e 
 
 A migration `apps/api/migrations/0003_client_key_prefixes.sql` normaliza os prefixos exibidos para as chaves já existentes e também foi aplicada em `dev`. Chaves já emitidas continuam válidas; clientes precisarão entrar novamente para receber o cookie de sessão com o novo nome.
 
-A migration `apps/api/migrations/0006_contextual_source_pages.sql` adiciona páginas por canal, análise contextual de sentimento e revisão administrativa de afinidade por período. Ela foi criada, mas ainda não aplicada; aplique-a em cada ambiente antes de publicar a versão que usa essas tabelas e colunas.
+A migration `apps/api/migrations/0006_contextual_source_pages.sql` adiciona páginas por canal, análise contextual de sentimento e revisão administrativa de afinidade por período. Ela já foi aplicada na branch Neon `dev`; aplique-a nos demais ambientes antes de publicar a versão que usa essas tabelas e colunas.
+
+A migration `apps/api/migrations/0007_optional_comment_profile.sql` torna o perfil do público opcional para comentários novos e já foi aplicada na branch Neon `dev`. Aplique-a após as migrations anteriores nos demais ambientes antes de publicar a versão que cadastra comentários sem perfil.
 
 ## Build e verificações
 
@@ -76,12 +78,19 @@ Cada push em `develop` publica um Preview isolado do Worker `gestor`; não cria 
 ## Fluxo diário
 
 1. A administradora cria a organização, seus assuntos monitorados e palavras-chave, canais, páginas/fontes por canal e um período de monitoramento. O cadastro e a associação das páginas são manuais; não há scraping de redes sociais.
-2. Enquanto o período está em processamento, a administradora pode associar páginas aos itens cadastrados individualmente ou importados em lote. Sentimentos informados são preservados; campos vazios são classificados pelo Workers AI com contexto da organização, e o resultado, justificativa e palavras-chave identificadas podem ser revisados e corrigidos manualmente.
+2. Enquanto o período está em processamento, a administradora cadastra publicações vinculadas a páginas e importa seus comentários individualmente ou em lote. Cada comentário novo herda canal e página da publicação selecionada e é classificado separadamente pelo Workers AI; sentimentos informados são preservados, e resultado, justificativa e palavras-chave identificadas podem ser revisados e corrigidos manualmente.
 3. O intervalo definido para o período é a referência de datas apresentada no relatório; notícias e comentários não exigem data individual.
 4. Para páginas com pelo menos três notícias associadas no período, a administração revisa a sugestão de afinidade (aliada, neutra ou crítica) com base na distribuição de sentimentos. Empates são sugeridos como neutros; a administração confirma ou corrige a sugestão.
 5. Ao concluir e revisar a alimentação, publica o período. Administradores podem corrigir conteúdo publicado, com registro de auditoria.
 6. Clientes consultam apenas períodos publicados da própria organização e exportam PDF/Excel; justificativas da IA e revisões de afinidade continuam restritas à administração. Um período em processamento não substitui o último publicado.
 
+### Importar comentários por CSV manualmente
+
+1. Na página da rede social, selecione e copie manualmente os comentários desejados. A extensão não acessa a página nem coleta conteúdo automaticamente.
+2. No Chrome, abra `chrome://extensions`, ative **Modo do desenvolvedor**, clique em **Carregar sem compactação** e selecione a pasta `tools/comment-csv-helper` deste repositório.
+3. Abra a extensão, cole os comentários e baixe o CSV. Use um comentário por linha; para preservar comentários com várias linhas, separe os blocos com uma linha em branco. O arquivo contém somente a coluna `content`, sem nomes de usuário.
+4. No Gestor, abra **Importar em massa**, selecione **Comentários (texto ou CSV)**, carregue o CSV e gere a prévia. Associe os comentários à publicação correspondente e, se desejar, informe o sentimento; os campos vazios são classificados pela IA.
+
 ## Limites atuais
 
-Busca automatizada por palavras-chave e captura de redes sociais permanecem fora da entrega operacional inicial; integrações com GDELT ou RSS devem ser avaliadas em fases posteriores e validadas com dados reais.
+Comentários são inseridos manualmente ou colados/importados pela administração e precisam estar vinculados a uma publicação de página cadastrada no período. A coleta automática por APIs oficiais das redes sociais ainda não está implementada; não há scraping.

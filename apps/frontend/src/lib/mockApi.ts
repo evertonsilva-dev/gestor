@@ -1,5 +1,5 @@
-import { mockProfile } from '@/features/auth/services/mockAuth'
-import { mockDashboardData } from '@/features/dashboard/services/mockDashboard'
+import { mockProfile } from '@/services/auth/mockAuth'
+import { mockDashboardData } from '@/services/dashboard/mockDashboard'
 
 export async function mockApiRequest<T>(path: string): Promise<T> {
   const pathname = new URL(path, window.location.origin).pathname

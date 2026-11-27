@@ -1,4 +1,4 @@
-import { createGlobalStyle } from 'styled-components'
+import { createGlobalStyle } from "styled-components";
 
 export const GlobalStyles = createGlobalStyle`
   *, *::before, *::after {
@@ -19,6 +19,7 @@ export const GlobalStyles = createGlobalStyle`
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
+    overflow: hidden;
   }
 
   #root {
@@ -59,4 +60,4 @@ export const GlobalStyles = createGlobalStyle`
     color: ${({ theme }) => theme.colors.navy};
     background: ${({ theme }) => theme.colors.gold};
   }
-`
+`;

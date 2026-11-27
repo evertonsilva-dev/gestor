@@ -17,11 +17,9 @@ const itemSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('comment'),
-    channelId: z.string().uuid(),
-    sourcePageId: z.string().uuid().nullable().optional(),
     content: z.string().trim().min(1).max(4000),
-    newsItemId: z.string().uuid().nullable().optional(),
-    profile: z.enum(['militante', 'simpatizante', 'detrator']),
+    newsItemId: z.string().uuid(),
+    profile: z.enum(['militante', 'simpatizante', 'detrator']).nullable().optional(),
     sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
   }),
   z.object({
@@ -156,6 +154,7 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
         [item],
         (value) => value.content,
         sentimentContext,
+        'comment',
       )
       rows = await sql`
         WITH inserted AS (
@@ -163,26 +162,16 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
             organization_id, period_id, channel_id, source_page_id, news_item_id, content,
             commented_at, profile, sentiment, sentiment_source, sentiment_reason, sentiment_keywords
           )
-          SELECT ${period.organizationId}, ${period.id}, c.id, page.id, linked.id,
-                 ${item.content}, NULL, ${item.profile}, ${classifiedItem.sentiment},
+          SELECT ${period.organizationId}, ${period.id}, linked.channel_id,
+                 linked.source_page_id, linked.id, ${item.content}, NULL, ${item.profile ?? null},
+                 ${classifiedItem.sentiment},
                  ${classifiedItem.sentimentSource}, ${classifiedItem.sentimentReason},
                  ${classifiedItem.sentimentKeywords}
-          FROM channels c
-          LEFT JOIN source_pages page
-            ON page.id = ${item.sourcePageId ?? null}
-            AND page.channel_id = c.id
-            AND page.organization_id = ${period.organizationId}
-            AND page.active = true
-          LEFT JOIN news_items linked
-            ON linked.id = ${item.newsItemId ?? null}
+          FROM news_items linked
+          WHERE linked.id = ${item.newsItemId}
             AND linked.organization_id = ${period.organizationId}
             AND linked.period_id = ${period.id}
-            AND linked.channel_id = c.id
-          WHERE c.id = ${item.channelId}
-            AND c.organization_id = ${period.organizationId}
-            AND c.active = true
-            AND (${item.sourcePageId ?? null}::uuid IS NULL OR page.id IS NOT NULL)
-            AND (${item.newsItemId ?? null}::uuid IS NULL OR linked.id IS NOT NULL)
+            AND linked.source_page_id IS NOT NULL
           RETURNING id
         ),
         audited AS (
@@ -210,7 +199,7 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
       `
     }
 
-    if (rows.length === 0) return json({ error: 'Canal, página ou notícia relacionada não pertence a esta organização e período.' }, 400)
+    if (rows.length === 0) return json({ error: 'Selecione uma publicação vinculada a uma página deste período.' }, 400)
     return json({ saved: true }, 201)
   } catch (error) {
     return apiError(error)

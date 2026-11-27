@@ -1,5 +1,5 @@
-import type { CardProps } from './types'
-import { CardHeading, Surface } from './styles'
+import type { CardProps } from '@/components/Card/types'
+import { CardHeading, Surface } from '@/components/Card/styles'
 
 export function Card({ title, subtitle, action, children, ...props }: CardProps) {
   return (

@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Arquea - CSV de comentários",
+  "version": "1.0.0",
+  "description": "Transforma comentários copiados manualmente em um CSV local para importação no Gestor.",
+  "action": {
+    "default_title": "Preparar CSV de comentários",
+    "default_popup": "popup.html"
+  }
+}

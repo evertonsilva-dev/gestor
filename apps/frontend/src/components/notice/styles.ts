@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import type { NoticeTone } from './types'
+import type { NoticeTone } from '@/components/Notice/types'
 
 export const Box = styled.div<{ $tone: NoticeTone }>`
   padding: 13px 15px;

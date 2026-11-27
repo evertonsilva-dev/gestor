@@ -1,5 +1,5 @@
-import type { MetricCardProps } from './types'
-import { Surface } from './styles'
+import type { MetricCardProps } from '@/components/MetricCard/types'
+import { Surface } from '@/components/MetricCard/styles'
 
 export function MetricCard({
   label,

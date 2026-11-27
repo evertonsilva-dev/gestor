@@ -1,0 +1,97 @@
+:root {
+  color-scheme: light;
+  font-family: Segoe UI, sans-serif;
+  color: #172a3a;
+  background: #f7f8fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 360px;
+  margin: 0;
+  padding: 18px;
+}
+
+main {
+  display: grid;
+  gap: 12px;
+}
+
+.eyebrow {
+  color: #9a6b00;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+h1 {
+  margin: 5px 0 7px;
+  font-size: 1.15rem;
+}
+
+header p,
+.privacy {
+  margin: 0;
+  color: #566575;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+label {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border: 1px solid #cbd3dc;
+  border-radius: 8px;
+  padding: 10px;
+  color: inherit;
+  background: white;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+textarea:focus {
+  outline: 2px solid #d5aa40;
+  outline-offset: 1px;
+}
+
+.hint,
+.status {
+  min-height: 1em;
+  margin: 0;
+  color: #566575;
+  font-size: 0.75rem;
+}
+
+.status[data-error="true"] { color: #a32121; }
+.status[data-success="true"] { color: #17653a; }
+
+button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: white;
+  background: #17364b;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #aab4be;
+  cursor: not-allowed;
+}
+
+.privacy {
+  border-top: 1px solid #dce1e6;
+  padding-top: 10px;
+  font-size: 0.7rem;
+}

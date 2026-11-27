@@ -24,9 +24,9 @@ export const Sidebar = styled.aside<{ $isOpen: boolean }>`
   height: 100dvh;
   overflow-y: auto;
   padding: 24px 16px;
-  color: #f7f8fa;
+  color: ${({ theme }) => theme.colors.onDark};
   background: ${({ theme }) => theme.colors.navy};
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid ${({ theme }) => theme.colors.borderOnDark};
 
   @media (max-width: 860px) {
     position: fixed;
@@ -38,7 +38,7 @@ export const Sidebar = styled.aside<{ $isOpen: boolean }>`
     gap: 24px;
     padding: 18px 16px;
     border-right: 0;
-    box-shadow: ${({ $isOpen }) => $isOpen ? '16px 0 40px rgba(0, 0, 0, 0.24)' : 'none'};
+    box-shadow: ${({ theme, $isOpen }) => $isOpen ? theme.shadows.drawer : 'none'};
     transform: translateX(${({ $isOpen }) => $isOpen ? '0' : '-105%'});
     visibility: ${({ $isOpen }) => $isOpen ? 'visible' : 'hidden'};
     transition: transform 200ms ease, visibility 200ms ease;
@@ -53,7 +53,7 @@ export const Overlay = styled.button`
   height: 100%;
   padding: 0;
   border: 0;
-  background: rgba(8, 13, 21, 0.58);
+  background: ${({ theme }) => theme.colors.overlay};
   cursor: pointer;
 `
 
@@ -79,9 +79,9 @@ export const CloseMenuButton = styled.button`
   width: 40px;
   height: 40px;
   flex: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid ${({ theme }) => theme.colors.borderOnDarkStrong};
   border-radius: ${({ theme }) => theme.radius.small};
-  color: #fff;
+  color: ${({ theme }) => theme.colors.onDark};
   background: transparent;
 
   @media (max-width: 860px) { display: inline-flex; }
@@ -99,18 +99,18 @@ export const Navigation = styled.nav`
     padding: 0 12px;
     border: 1px solid transparent;
     border-radius: ${({ theme }) => theme.radius.medium};
-    color: #bdc6d1;
+    color: ${({ theme }) => theme.colors.onDarkMuted};
     font-size: 0.88rem;
     font-weight: 550;
     transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
     &:hover {
-      color: #fff;
+      color: ${({ theme }) => theme.colors.onDark};
       background: ${({ theme }) => theme.colors.navyLight};
     }
     &.active {
-      color: #fff;
-      background: linear-gradient(100deg, rgba(242, 176, 111, 0.18), rgba(82, 40, 66, 0.92) 78%);
-      border-color: rgba(242, 176, 111, 0.24);
+      color: ${({ theme }) => theme.colors.onDark};
+      background: ${({ theme }) => `linear-gradient(100deg, ${theme.colors.accentOnDark}, ${theme.colors.navyLight} 78%)`};
+      border-color: ${({ theme }) => theme.colors.accentBorderOnDark};
       box-shadow: inset 3px 0 ${({ theme }) => theme.colors.gold};
     }
     &:focus-visible {
@@ -134,7 +134,7 @@ export const Account = styled.div`
   gap: 12px;
   margin-top: auto;
   padding: 14px 9px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid ${({ theme }) => theme.colors.borderOnDark};
 
 `
 
@@ -142,7 +142,7 @@ export const AccountName = styled.div`
   overflow: hidden;
   strong, span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   strong { font-size: 0.85rem; }
-  span { margin-top: 4px; color: #aab4c2; font-size: 0.75rem; }
+  span { margin-top: 4px; color: ${({ theme }) => theme.colors.onDarkSoft}; font-size: 0.75rem; }
 `
 
 export const Main = styled.main`

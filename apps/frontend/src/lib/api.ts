@@ -1,4 +1,4 @@
-import { getAuthToken, hasAuthConfiguration } from '@/features/auth/services/authClient'
+import { getAuthToken, hasAuthConfiguration } from '@/services/auth/authClient'
 
 interface ApiErrorBody {
   error?: string

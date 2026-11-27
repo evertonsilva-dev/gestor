@@ -1,29 +1,13 @@
-import { useEffect, useId, useRef, useState } from 'react'
 import Select from 'react-select'
-import { useTheme } from 'styled-components'
-import type { FormFieldProps } from './types'
-import { createSelectStyles, Field, FieldLabel } from './styles'
+import { useFormField } from '@/hooks/useFormField'
+import type { FormFieldProps } from '@/components/FormField/types'
+import { createSelectStyles, Field, FieldLabel } from '@/components/FormField/styles'
 
 export function FormField(props: FormFieldProps) {
-  const generatedId = useId()
-  const controlId = props.id ?? generatedId
-  const fieldRef = useRef<HTMLDivElement>(null)
-  const [resetKey, setResetKey] = useState(0)
-  const theme = useTheme()
-
-  useEffect(() => {
-    if (props.as !== 'select') return
-
-    const form = fieldRef.current?.closest('form')
-    if (!form) return
-
-    function resetSelect() {
-      setResetKey((current) => current + 1)
-    }
-
-    form.addEventListener('reset', resetSelect)
-    return () => form.removeEventListener('reset', resetSelect)
-  }, [props.as])
+  const { controlId, fieldRef, resetKey, theme } = useFormField({
+    id: props.id,
+    as: props.as,
+  })
 
   if (props.as === 'select') {
     const {

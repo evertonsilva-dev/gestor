@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import type { UserProfile } from '@/types/domain'
 
 export interface AuthContextValue {
@@ -9,8 +8,4 @@ export interface AuthContextValue {
   signInWithKey: (accessKey: string) => Promise<void>
   signOut: () => Promise<void>
   refresh: () => Promise<void>
-}
-
-export interface AuthProviderProps {
-  children: ReactNode
 }

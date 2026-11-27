@@ -4,9 +4,9 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 import { RangePicker } from 'rc-picker'
 import dateFnsGenerateConfig from 'rc-picker/es/generate/dateFns'
 import ptBrLocale from 'rc-picker/es/locale/pt_BR'
-import { Field, FieldLabel } from '@/components/formField/styles'
-import type { DateRangeFieldProps } from './types'
-import { DatePickerPopupStyles, DateRangeControl } from './styles'
+import { Field, FieldLabel } from '@/components/FormField/styles'
+import type { DateRangeFieldProps } from '@/components/DateRangeField/types'
+import { DatePickerPopupStyles, DateRangeControl } from '@/components/DateRangeField/styles'
 import 'rc-picker/assets/index.css'
 
 export function DateRangeField({

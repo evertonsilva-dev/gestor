@@ -111,7 +111,11 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
         INSERT INTO audit_events (actor_user_id, organization_id, action, entity_type, entity_id, metadata)
         SELECT ${actor.id}, ${stats.organizationId}, 'source_page.affinity_reviewed',
                'source_page', "sourcePageId"::text,
-               jsonb_build_object('periodId', ${params.periodId}, 'suggested', ${suggestedAffinity}, 'reviewed', ${parsed.data.affinity})
+               jsonb_build_object(
+                 'periodId', ${params.periodId}::text,
+                 'suggested', ${suggestedAffinity}::text,
+                 'reviewed', ${parsed.data.affinity}::text
+               )
         FROM saved
         RETURNING id
       )

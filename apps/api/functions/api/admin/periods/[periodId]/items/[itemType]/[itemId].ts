@@ -18,8 +18,7 @@ const newsUpdate = z.object({
 
 const commentUpdate = z.object({
   content: z.string().trim().min(1).max(4000).optional(),
-  sourcePageId: z.string().uuid().nullable().optional(),
-  newsItemId: z.string().uuid().nullable().optional(),
+  newsItemId: z.string().uuid().optional(),
   profile: z.enum(['militante', 'simpatizante', 'detrator']).optional(),
   sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
 }).refine((value) => Object.keys(value).length > 0)
@@ -71,6 +70,14 @@ export const onRequestPatch: PagesFunction<Environment> = async ({ request, env,
                   AND page.active = true
               )
             )
+            AND (
+              NOT ${Object.hasOwn(parsed.data, 'sourcePageId')}
+              OR ${parsed.data.sourcePageId ?? null}::uuid IS NOT DISTINCT FROM news_items.source_page_id
+              OR NOT EXISTS (
+                SELECT 1 FROM analyzed_comments comment
+                WHERE comment.news_item_id = news_items.id
+              )
+            )
           RETURNING id, organization_id AS "organizationId"
         ),
         audited AS (
@@ -87,7 +94,22 @@ export const onRequestPatch: PagesFunction<Environment> = async ({ request, env,
         WITH updated AS (
           UPDATE analyzed_comments item
           SET content = COALESCE(${parsed.data.content ?? null}, item.content),
-              source_page_id = CASE WHEN ${Object.hasOwn(parsed.data, 'sourcePageId')} THEN ${parsed.data.sourcePageId ?? null} ELSE item.source_page_id END,
+              channel_id = CASE WHEN ${Object.hasOwn(parsed.data, 'newsItemId')} THEN (
+                SELECT linked.channel_id
+                FROM news_items linked
+                WHERE linked.id = ${parsed.data.newsItemId ?? null}
+                  AND linked.organization_id = item.organization_id
+                  AND linked.period_id = item.period_id
+                  AND linked.source_page_id IS NOT NULL
+              ) ELSE item.channel_id END,
+              source_page_id = CASE WHEN ${Object.hasOwn(parsed.data, 'newsItemId')} THEN (
+                SELECT linked.source_page_id
+                FROM news_items linked
+                WHERE linked.id = ${parsed.data.newsItemId ?? null}
+                  AND linked.organization_id = item.organization_id
+                  AND linked.period_id = item.period_id
+                  AND linked.source_page_id IS NOT NULL
+              ) ELSE item.source_page_id END,
               profile = COALESCE(${parsed.data.profile ?? null}, item.profile),
               sentiment = COALESCE(${parsed.data.sentiment ?? null}, item.sentiment),
               sentiment_source = CASE WHEN ${Object.hasOwn(parsed.data, 'sentiment')} THEN 'manual' ELSE item.sentiment_source END,
@@ -98,24 +120,12 @@ export const onRequestPatch: PagesFunction<Environment> = async ({ request, env,
             AND item.period_id = ${params.periodId}
             AND (
               NOT ${Object.hasOwn(parsed.data, 'newsItemId')}
-              OR ${parsed.data.newsItemId ?? null}::uuid IS NULL
               OR EXISTS (
                 SELECT 1 FROM news_items linked
                 WHERE linked.id = ${parsed.data.newsItemId ?? null}
                   AND linked.organization_id = item.organization_id
                   AND linked.period_id = item.period_id
-                  AND linked.channel_id = item.channel_id
-              )
-            )
-            AND (
-              NOT ${Object.hasOwn(parsed.data, 'sourcePageId')}
-              OR ${parsed.data.sourcePageId ?? null}::uuid IS NULL
-              OR EXISTS (
-                SELECT 1 FROM source_pages page
-                WHERE page.id = ${parsed.data.sourcePageId ?? null}
-                  AND page.organization_id = item.organization_id
-                  AND page.channel_id = item.channel_id
-                  AND page.active = true
+                  AND linked.source_page_id IS NOT NULL
               )
             )
           RETURNING id, organization_id AS "organizationId"

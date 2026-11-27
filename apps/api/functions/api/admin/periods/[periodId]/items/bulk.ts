@@ -15,11 +15,9 @@ const newsItemSchema = z.object({
 })
 
 const commentItemSchema = z.object({
-  channelId: z.string().uuid(),
-  sourcePageId: z.string().uuid().nullable().optional(),
   content: z.string().trim().min(1).max(4000),
-  newsItemId: z.string().uuid().nullable(),
-  profile: z.enum(['militante', 'simpatizante', 'detrator']),
+  newsItemId: z.string().uuid(),
+  profile: z.enum(['militante', 'simpatizante', 'detrator']).nullable().optional(),
   sentiment: z.enum(['positive', 'neutral', 'negative']).optional(),
 })
 
@@ -71,6 +69,7 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
         parsed.data.items,
         (item) => item.content,
         await getSentimentContext(sql, period.organizationId, period.organizationName),
+        'comment',
       )
     const payload = JSON.stringify(classifiedItems)
     const result = parsed.data.type === 'news'
@@ -138,7 +137,7 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
             )
             SELECT ${period.organizationId}, ${period.id}, candidate."channelId",
                    candidate."sourcePageId", candidate.title, candidate."sourceUrl", NULL,
-                   candidate.sentiment, candidate."sentimentSource", candidate."sentimentReason",
+                   candidate.sentiment::news_sentiment, candidate."sentimentSource", candidate."sentimentReason",
                    candidate."sentimentKeywords", candidate.notes
             FROM candidates candidate
             RETURNING id, organization_id AS "organizationId"
@@ -159,7 +158,7 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
             SELECT e.ordinality AS row_number, item.*
             FROM jsonb_array_elements(${payload}::jsonb) WITH ORDINALITY AS e(value, ordinality)
             CROSS JOIN LATERAL jsonb_to_record(e.value) AS item(
-              "channelId" uuid, "sourcePageId" uuid, content text, "newsItemId" uuid,
+              content text, "newsItemId" uuid,
               profile text, sentiment text, "sentimentSource" text,
               "sentimentReason" text, "sentimentKeywords" text[]
             )
@@ -167,28 +166,17 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
           invalid AS (
             SELECT source.row_number
             FROM source
-            LEFT JOIN channels channel
-              ON channel.id = source."channelId"
-              AND channel.organization_id = ${period.organizationId}
-              AND channel.active = true
-            LEFT JOIN source_pages page
-              ON page.id = source."sourcePageId"
-              AND page.channel_id = source."channelId"
-              AND page.organization_id = ${period.organizationId}
-              AND page.active = true
             LEFT JOIN news_items linked
               ON linked.id = source."newsItemId"
               AND linked.organization_id = ${period.organizationId}
               AND linked.period_id = ${period.id}
-              AND linked.channel_id = source."channelId"
-            WHERE channel.id IS NULL
-              OR (source."sourcePageId" IS NOT NULL AND page.id IS NULL)
-              OR (source."newsItemId" IS NOT NULL AND linked.id IS NULL)
+              AND linked.source_page_id IS NOT NULL
+            WHERE linked.id IS NULL
           ),
           ranked AS (
             SELECT source.*,
                    row_number() OVER (
-                     PARTITION BY source."channelId", source."newsItemId",
+                     PARTITION BY source."newsItemId",
                        lower(regexp_replace(btrim(source.content), '[[:space:]]+', ' ', 'g'))
                      ORDER BY source.row_number
                    ) AS occurrence
@@ -197,16 +185,11 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
           candidates AS (
             SELECT ranked.*
             FROM ranked
-            JOIN channels channel
-              ON channel.id = ranked."channelId"
-              AND channel.organization_id = ${period.organizationId}
-              AND channel.active = true
             WHERE ranked.occurrence = 1
               AND NOT EXISTS (SELECT 1 FROM invalid)
               AND NOT EXISTS (
                 SELECT 1 FROM analyzed_comments existing
                 WHERE existing.period_id = ${period.id}
-                  AND existing.channel_id = ranked."channelId"
                   AND existing.news_item_id IS NOT DISTINCT FROM ranked."newsItemId"
                   AND lower(regexp_replace(btrim(existing.content), '[[:space:]]+', ' ', 'g'))
                     = lower(regexp_replace(btrim(ranked.content), '[[:space:]]+', ' ', 'g'))
@@ -218,11 +201,17 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
               content, commented_at, profile, sentiment, sentiment_source,
               sentiment_reason, sentiment_keywords
             )
-            SELECT ${period.organizationId}, ${period.id}, candidate."channelId",
-                   candidate."sourcePageId", candidate."newsItemId", candidate.content, NULL,
-                   candidate.profile, candidate.sentiment, candidate."sentimentSource",
+            SELECT ${period.organizationId}, ${period.id}, linked.channel_id,
+                   linked.source_page_id, linked.id, candidate.content, NULL,
+                   candidate.profile::audience_profile, candidate.sentiment::news_sentiment,
+                   candidate."sentimentSource",
                    candidate."sentimentReason", candidate."sentimentKeywords"
             FROM candidates candidate
+            JOIN news_items linked
+              ON linked.id = candidate."newsItemId"
+              AND linked.organization_id = ${period.organizationId}
+              AND linked.period_id = ${period.id}
+              AND linked.source_page_id IS NOT NULL
             RETURNING id, organization_id AS "organizationId"
           ),
           audited AS (
@@ -240,7 +229,7 @@ export const onRequestPost: PagesFunction<Environment> = async ({ request, env, 
     const summary = result[0]
     if (summary.invalid > 0) {
       return json({
-        error: 'Há linhas com canal, página ou notícia incompatível. Nenhum registro foi importado.',
+        error: 'A publicação selecionada não pertence a este período ou não está vinculada a uma página. Nenhum registro foi importado.',
         invalid: summary.invalid,
       }, 400)
     }

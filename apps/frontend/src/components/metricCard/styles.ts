@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import type { MetricCardAccent } from './types'
+import type { MetricCardAccent } from '@/components/MetricCard/types'
 
 export const Surface = styled.article<{ $accent: MetricCardAccent }>`
   padding: 18px;

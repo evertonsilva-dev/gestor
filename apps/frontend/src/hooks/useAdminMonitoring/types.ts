@@ -27,11 +27,8 @@ export type PeriodItemInput =
     }
   | {
       type: 'comment'
-      channelId: string
-      sourcePageId?: string | null
       content: string
-      newsItemId: string | null
-      profile: 'militante' | 'simpatizante' | 'detrator'
+      newsItemId: string
       sentiment?: 'positive' | 'neutral' | 'negative'
     }
   | {

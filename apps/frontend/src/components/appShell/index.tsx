@@ -1,10 +1,9 @@
 import { Building2, FileBarChart2, LogOut, Menu, Radio, ShieldCheck, X } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
-import { Button } from '../button'
-import { Notice } from '../notice'
-import type { AppShellProps } from './types'
-import { useMobileNavigation } from './useMobileNavigation'
+import { useAppShell } from '@/hooks/useAppShell'
+import { Button } from '@/components/Button'
+import { Notice } from '@/components/Notice'
+import type { AppShellProps } from '@/components/AppShell/types'
 import {
   Account,
   AccountName,
@@ -18,12 +17,10 @@ import {
   Navigation,
   Overlay,
   Sidebar,
-} from './styles'
+} from '@/components/AppShell/styles'
 
 export function AppShell({ children }: AppShellProps) {
-  const { profile, signOut, authError } = useAuth()
-  const mobileNavigation = useMobileNavigation()
-  const isAdmin = profile?.role === 'admin'
+  const { profile, authError, isAdmin, mobileNavigation, signOut } = useAppShell()
 
   return (
     <Frame>
@@ -63,7 +60,7 @@ export function AppShell({ children }: AppShellProps) {
             <strong>{profile?.name || profile?.email}</strong>
             <span>{isAdmin ? 'Administradora' : profile?.organizationName}</span>
           </AccountName>
-          <Button variant="quiet" size="small" onClick={() => { void signOut().catch(() => undefined) }}>
+          <Button variant="quiet" size="small" onClick={signOut}>
             <LogOut size={15} /> Sair
           </Button>
         </Account>

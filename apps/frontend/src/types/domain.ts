@@ -66,7 +66,7 @@ export interface DashboardData {
     id: string
     content: string
     channelName: string
-    profile: 'militante' | 'simpatizante' | 'detrator'
+    profile: 'militante' | 'simpatizante' | 'detrator' | null
     sentiment: 'positive' | 'neutral' | 'negative'
     commentedAt: string | null
     newsTitle: string | null

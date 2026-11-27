@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components'
-import type { ButtonProps } from './types'
+import type { ButtonProps } from '@/components/Button/types'
 
 export const StyledButton = styled.button<{
   $variant: NonNullable<ButtonProps['variant']>
@@ -47,11 +47,11 @@ export const StyledButton = styled.button<{
           color: ${theme.colors.ink};
           background: ${theme.colors.surface};
           border-color: ${theme.colors.border};
-          box-shadow: 0 1px 2px rgba(16, 23, 34, 0.04);
+          box-shadow: ${theme.shadows.subtle};
           &:hover:not(:disabled) {
             background: ${theme.colors.surfaceMuted};
-            border-color: #cbd2dc;
-            box-shadow: 0 5px 14px rgba(16, 23, 34, 0.08);
+            border-color: ${theme.colors.border};
+            box-shadow: ${theme.shadows.hover};
           }
         `
       case 'quiet':
@@ -66,22 +66,22 @@ export const StyledButton = styled.button<{
         `
       case 'danger':
         return css`
-          color: #fff;
+          color: ${theme.colors.onDark};
           background: ${theme.colors.danger};
-          box-shadow: 0 4px 12px rgba(189, 63, 57, 0.18);
+          box-shadow: ${theme.shadows.danger};
           &:hover:not(:disabled) {
-            background: #9e332e;
-            box-shadow: 0 6px 16px rgba(189, 63, 57, 0.24);
+            background: ${theme.colors.dangerHover};
+            box-shadow: ${theme.shadows.dangerHover};
           }
         `
       default:
         return css`
           color: ${theme.colors.navy};
           background: ${theme.colors.gold};
-          box-shadow: 0 4px 12px rgba(232, 185, 20, 0.2);
+          box-shadow: ${theme.shadows.primary};
           &:hover:not(:disabled) {
-            background: #f1c82c;
-            box-shadow: 0 6px 16px rgba(232, 185, 20, 0.28);
+            background: ${theme.colors.goldHover};
+            box-shadow: ${theme.shadows.primaryHover};
           }
         `
     }

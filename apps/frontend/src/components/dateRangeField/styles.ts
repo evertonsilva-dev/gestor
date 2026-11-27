@@ -41,7 +41,7 @@ export const DateRangeControl = styled.div`
 
   .rc-picker-range .rc-picker-input-active {
     border-color: ${({ theme }) => theme.colors.navy};
-    box-shadow: 0 0 0 3px rgba(16, 23, 34, 0.08);
+    box-shadow: ${({ theme }) => theme.shadows.focusRing};
   }
 
   .rc-picker-input > input {

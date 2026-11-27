@@ -101,7 +101,7 @@ export const onRequestGet: PagesFunction<Environment> = async ({ request, env })
             ELSE round(count(*) * 100.0 / sum(count(*)) OVER ())::int
           END AS percentage
         FROM analyzed_comments
-        WHERE period_id = ${selectedPeriod.id}
+        WHERE period_id = ${selectedPeriod.id} AND profile IS NOT NULL
         GROUP BY profile
         ORDER BY CASE profile WHEN 'militante' THEN 1 WHEN 'simpatizante' THEN 2 ELSE 3 END
       `,
